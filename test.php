@@ -8,4 +8,4 @@ require './vendor/autoload.php';
 
 $output = new Output(new Stream());
 $input = new Input($output);
-dump($input->readline('in:'));
+dump($input->masked('in:'));

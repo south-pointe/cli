@@ -12,13 +12,9 @@ use function array_map;
 use function assert;
 use function grapheme_strlen;
 use function is_resource;
-use function is_string;
 use function max;
-use function readline;
 use function readline_callback_handler_install;
 use function readline_callback_handler_remove;
-use function readline_callback_read_char;
-use function readline_info;
 use function shell_exec;
 use function str_pad;
 use function str_repeat;
@@ -45,8 +41,7 @@ class Input
      */
     public function text(string $prompt = ''): string
     {
-        $line = readline($prompt);
-        return is_string($line) ? $line : '';
+        return $this->readline($prompt);
     }
 
     public function number(string $prompt = ''): string
@@ -127,76 +122,28 @@ class Input
      */
     public function masked(string $prompt = '', string $replacement = '*'): string
     {
-        return $this->readEach($prompt, function (array $info) use ($replacement) {
+        return $this->readline($prompt, function (InputInfo $info) use ($prompt, $replacement) {
             $this->output->ansi
                 // Clear all output up to the end of prompt text.
-                ->cursorBack($info['point'])->eraseToEndOfLine()
+                ->cursorBack(9999)->eraseToEndOfLine()
                 // Write replacement text (will set the cursor to the end).
-                ->text(str_repeat($replacement, $info['end']))
+                ->text($prompt . str_repeat($replacement, $info->end))
                 // Set the cursor back to the offset position.
-                ->cursorBack($info['end'] - $info['point'])
+                ->cursorBack($info->end - $info->point)
                 ->flush();
         });
     }
 
     /**
-     * @param string $prompt
-     * @param Closure(array<string, mixed>, ?bool): (mixed|false)|null $callback
-     * Invoked for each character read. First argument contains the character read and
-     * second argument contains a string of all the chars upto the current char.
-     *
-     * @return string
-     */
-    public function readEach(string $prompt, ?Closure $callback = null): string
-    {
-        $line = '';
-        $done = false;
-
-        readline_callback_handler_install($prompt, static function(string $buffer) use (&$done, &$line) {
-            $done = true;
-            $line = $buffer;
-        });
-
-        try {
-            $stream = $this->getStdin();
-            $read = [$stream];
-            $write = null;
-            $except = null;
-            while (true) {
-                stream_select($read, $write, $except, null);
-                readline_callback_read_char();
-
-                if ($callback !== null) {
-                    $info = (array) readline_info();
-                    if ($callback($info, $done) === false) {
-                        break;
-                    }
-                }
-
-                if ($done) {
-                    break;
-                }
-            }
-        }
-        finally {
-            readline_callback_handler_remove();
-        }
-
-        // HACK: Pressing enter with no input shows duplicated prompt
-        // for some strange reason, so we have to clear the line.
-        $this->output->ansi->eraseLine();
-
-        return $line;
-    }
-
-    /**
      * @param string|null $prompt
-     * @param Closure(InputInfo): (mixed|false)|null $callback
+     * @param Closure(InputInfo): (mixed|false)|null $onKeyInput
+     * Invoked for each key input. First argument contains the character read and
+     * second argument contains a string of all the chars upto the current char.
      * @return string
      */
-    public function readline(?string $prompt = null, ?Closure $callback = null): string
+    public function readline(?string $prompt = null, ?Closure $onKeyInput = null): string
     {
-        $stream = $this->getStdin();
+        $stream = $this->getInputStream();
         $info = new InputInfo($prompt);
         $readline = new Readline($this->output->ansi, $info);
 
@@ -205,8 +152,10 @@ class Input
             while (!$info->done) {
                 $readline->process($this->waitForInput($stream));
 
-                if ($callback !== null) {
-                    $callback($info);
+                if ($onKeyInput !== null) {
+                    if ($onKeyInput($info) === false) {
+                        break;
+                    }
                 }
             }
         }
@@ -309,7 +258,7 @@ class Input
     /**
      * @return resource
      */
-    protected function getStdin(): mixed
+    protected function getInputStream(): mixed
     {
         $stream = fopen('php://stdin', 'r');
         assert(is_resource($stream));
