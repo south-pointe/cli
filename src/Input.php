@@ -9,7 +9,9 @@ use SouthPointe\Cli\Input\Readline;
 use function array_key_exists;
 use function array_keys;
 use function array_map;
+use function assert;
 use function grapheme_strlen;
+use function is_resource;
 use function is_string;
 use function max;
 use function readline;
@@ -25,7 +27,6 @@ use function stream_select;
 use function substr;
 use function system;
 use function trim;
-use const STDIN;
 
 class Input
 {
@@ -157,7 +158,8 @@ class Input
         });
 
         try {
-            $read = [STDIN];
+            $stream = $this->getStdin();
+            $read = [$stream];
             $write = null;
             $except = null;
             while (true) {
@@ -194,13 +196,14 @@ class Input
      */
     public function readline(?string $prompt = null, ?Closure $callback = null): string
     {
+        $stream = $this->getStdin();
         $info = new InputInfo($prompt);
         $readline = new Readline($this->output->ansi, $info);
 
         readline_callback_handler_install($prompt ?? '', static fn() => true);
         try {
             while (!$info->done) {
-                $readline->process($this->readKey());
+                $readline->process($this->waitForInput($stream));
 
                 if ($callback !== null) {
                     $callback($info);
@@ -215,11 +218,11 @@ class Input
     }
 
     /**
+     * @param resource $stream
      * @return string
      */
-    protected function readKey(): string
+    protected function waitForInput(mixed $stream): string
     {
-        $stream = STDIN;
         $read = [$stream];
         $write = $except = null;
         stream_select($read, $write, $except, null);
@@ -301,5 +304,15 @@ class Input
         }
 
         return $input;
+    }
+
+    /**
+     * @return resource
+     */
+    protected function getStdin(): mixed
+    {
+        $stream = fopen('php://stdin', 'r');
+        assert(is_resource($stream));
+        return $stream;
     }
 }

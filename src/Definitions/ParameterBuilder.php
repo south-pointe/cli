@@ -2,9 +2,6 @@
 
 namespace SouthPointe\Cli\Definitions;
 
-/**
- * @template TParameter of Parameter
- */
 class ParameterBuilder
 {
     /**

@@ -215,10 +215,9 @@ final class Readline
      */
     protected static function matchesKey(string $key, string|array $candidate): bool
     {
-        if (is_array($candidate)) {
-            return in_array($key, $candidate, true);
-        }
-        return $key === $candidate;
+        return is_array($candidate)
+            ? in_array($key, $candidate, true)
+            : $key === $candidate;
     }
 
     /**
@@ -235,7 +234,7 @@ final class Readline
         while ($offset < $bytes) {
             $char = grapheme_extract($buffer, 1, GRAPHEME_EXTR_COUNT, $offset, $offset);
             if ($char !== false) {
-                $position += self::getStringWidth($char);
+                $position += self::getCharWidth($char);
             }
         }
 
@@ -246,7 +245,7 @@ final class Readline
      * @param string $char
      * @return int
      */
-    protected static function getStringWidth(string $char): int
+    protected static function getCharWidth(string $char): int
     {
         // detect full-width characters
         // mb_strlen check is required since some emojis will return values greater than 1 with mb_strwidth.
