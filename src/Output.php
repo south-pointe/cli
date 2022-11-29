@@ -2,16 +2,16 @@
 
 namespace SouthPointe\Cli;
 
-use SouthPointe\Cli\Output\Ansi;
-use SouthPointe\Cli\Output\Ansi\Color;
+use SouthPointe\Ansi\Codes\Color;
+use SouthPointe\Ansi\Stream;
 
 class Output
 {
     /**
-     * @param Ansi $ansi
+     * @param Stream $ansi
      */
     public function __construct(
-        readonly public Ansi $ansi,
+        readonly public Stream $ansi,
     )
     {
     }
@@ -24,18 +24,16 @@ class Output
      */
     public function text(string $text, ?Color $foreground = null, ?Color $background = null): static
     {
-        $ansi = $this->ansi->buffer();
-
         if ($foreground !== null) {
-            $ansi->foreground($foreground);
+            $this->ansi->fgColor($foreground);
         }
 
         if ($background !== null) {
-            $ansi->background($background);
+            $this->ansi->bgColor($background);
         }
 
-        $ansi->text($text)
-            ->noStyle()
+        $this->ansi->text($text)
+            ->resetStyle()
             ->flush();
 
         return $this;
@@ -47,9 +45,10 @@ class Output
      */
     public function line(?string $text = null): static
     {
-        $text !== null
+        $buffer = $text !== null
             ? $this->ansi->line($text)
             : $this->ansi->lineFeed();
+        $buffer->flush();
 
         return $this;
     }
@@ -61,8 +60,7 @@ class Output
     public function debug(string $text): static
     {
         $this->ansi
-            ->buffer()
-            ->foreground(Color::Gray)
+            ->fgColor(Color::Gray)
             ->line($text)
             ->flush();
 
@@ -85,7 +83,7 @@ class Output
     public function notice(string $text): static
     {
         $this->ansi
-            ->foreground(Color::Green)
+            ->fgColor(Color::Green)
             ->line($text)
             ->flush();
 
@@ -99,8 +97,7 @@ class Output
     public function warning(string $text): static
     {
         $this->ansi
-            ->buffer()
-            ->foreground(Color::Yellow)
+            ->fgColor(Color::Yellow)
             ->line($text)
             ->flush();
 
@@ -114,11 +111,10 @@ class Output
     public function error(string $text): static
     {
         $this->ansi
-            ->buffer()
-            ->background(Color::Red)
-            ->foreground(Color::White)
+            ->bgColor(Color::Red)
+            ->fgColor(Color::White)
             ->line($text)
-            ->noStyle()
+            ->resetStyle()
             ->flush();
 
         return $this;

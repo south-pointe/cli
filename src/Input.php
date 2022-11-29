@@ -3,9 +3,9 @@
 namespace SouthPointe\Cli;
 
 use Closure;
+use RuntimeException;
 use SouthPointe\Cli\Input\InputInfo;
 use SouthPointe\Cli\Input\Readline;
-use RuntimeException;
 use function array_key_exists;
 use function array_keys;
 use function array_map;
@@ -52,8 +52,7 @@ class Input
     {
         $this->output->text($prompt);
 
-        return $this->readline(function (string $buffer) {
-        });
+        return $this->readline();
     }
 
     /**
@@ -134,7 +133,8 @@ class Input
                 // Write replacement text (will set the cursor to the end).
                 ->text(str_repeat($replacement, $info['end']))
                 // Set the cursor back to the offset position.
-                ->cursorBack($info['end'] - $info['point']);
+                ->cursorBack($info['end'] - $info['point'])
+                ->flush();
         });
     }
 
@@ -197,7 +197,7 @@ class Input
         $info = new InputInfo($prompt);
         $readline = new Readline($this->output->ansi, $info);
 
-        readline_callback_handler_install('', static fn() => true);
+        readline_callback_handler_install($prompt ?? '', static fn() => true);
         try {
             while (!$info->done) {
                 $readline->process($this->readKey());
@@ -212,7 +212,6 @@ class Input
         }
 
         return $info->buffer;
-
     }
 
     /**

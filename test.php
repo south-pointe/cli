@@ -1,12 +1,11 @@
 <?php
 
+use SouthPointe\Ansi\Stream;
 use SouthPointe\Cli\Input;
 use SouthPointe\Cli\Output;
-use SouthPointe\Cli\Output\Ansi;
 
 require './vendor/autoload.php';
 
-$output = new Output($ansi = new Ansi());
+$output = new Output(new Stream());
 $input = new Input($output);
-//readline('');
-dump($input->readline());
+dump($input->readline('in:'));

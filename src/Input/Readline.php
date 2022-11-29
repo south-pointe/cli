@@ -2,7 +2,7 @@
 
 namespace SouthPointe\Cli\Input;
 
-use SouthPointe\Cli\Output\Ansi;
+use SouthPointe\Ansi\Stream;
 use function assert;
 use function grapheme_extract;
 use function grapheme_strlen;
@@ -33,7 +33,7 @@ final class Readline
     public const PREV_WORD = "\eb"; // option+b
 
     public function __construct(
-        protected Ansi $ansi,
+        protected Stream $ansi,
         protected InputInfo $info,
     )
     {
@@ -121,7 +121,8 @@ final class Readline
         elseif (self::matchesKey($key, self::CLEAR_SCREEN)) {
             $this->ansi
                 ->eraseScreen()
-                ->cursorPosition(1, 1);
+                ->cursorPosition(1, 1)
+                ->flush();
         }
         elseif (self::matchesKey($key, self::NEXT_WORD)) {
             $cursor = $point;
@@ -164,7 +165,6 @@ final class Readline
     protected function render(): void
     {
         $this->ansi
-            ->buffer()
             ->eraseLine()
             ->cursorBack(9999)
             ->text($this->getRenderingText())
@@ -178,7 +178,9 @@ final class Readline
      */
     protected function done(): void
     {
-        $this->ansi->lineFeed();
+        $this->ansi
+            ->lineFeed()
+            ->flush();
     }
 
     /**
@@ -237,7 +239,7 @@ final class Readline
             }
         }
 
-        return $position;
+        return strlen($info->prompt) + $position;
     }
 
     /**
