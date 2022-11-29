@@ -74,16 +74,21 @@ class Input
     }
 
     /**
-     * @param string|null $message
+     * @param string $message
+     * [Optional] The confirmation message
      * @param bool|null $default
+     * [Optional] Setting this to **true** will set default to YES,
+     * NO if set to **false**,
+     * no default will be set if set to **null**.
+     * Defaults to **null**.
      * @return bool
      */
-    public function confirm(?string $message = null, ?bool $default = null): bool
+    public function confirm(string $message = '', ?bool $default = null): bool
     {
         $yes = 'y';
         $no = 'n';
 
-        $text = ($message ?? '') . "({$yes}/{$no}) ";
+        $text = "{$message}({$yes}/{$no}) ";
         if ($default !== null) {
             $text .= '[default: ' . ($default ? $yes : $no) . ']';
         }
@@ -135,19 +140,19 @@ class Input
     }
 
     /**
-     * @param string|null $prompt
+     * @param string $prompt
      * @param Closure(InputInfo): (mixed|false)|null $onKeyInput
      * Invoked for each key input. First argument contains the character read and
      * second argument contains a string of all the chars upto the current char.
      * @return string
      */
-    public function readline(?string $prompt = null, ?Closure $onKeyInput = null): string
+    public function readline(string $prompt = '', ?Closure $onKeyInput = null): string
     {
         $stream = $this->getInputStream();
         $info = new InputInfo($prompt);
         $readline = new Readline($this->output->ansi, $info);
 
-        readline_callback_handler_install($prompt ?? '', static fn() => true);
+        readline_callback_handler_install($prompt, static fn() => true);
         try {
             while (!$info->done) {
                 $readline->process($this->waitForInput($stream));
