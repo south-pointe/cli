@@ -6,6 +6,7 @@
   "require": {
     "php": ">= 8.1",
     "ext-intl": "*",
+    "ext-ctype": "*",
     "ext-readline": "*",
     "south-pointe/ansi": "dev-main",
     "webmozart/assert": "^1.11"

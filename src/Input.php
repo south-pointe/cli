@@ -23,6 +23,7 @@ use function stream_select;
 use function substr;
 use function system;
 use function trim;
+use const PHP_INT_MAX;
 
 class Input
 {
@@ -44,11 +45,43 @@ class Input
         return $this->readline($prompt);
     }
 
-    public function number(string $prompt = ''): string
+    public function integer(string $prompt = ''): ?int
     {
-        $this->output->text($prompt);
+        $ansi = $this->output->ansi;
+        $value = null;
+        $this->readline($prompt, function(InputInfo $info) use ($ansi, $prompt, &$value) {
+            if ($info->done) {
+                return false;
+            }
 
-        return $this->readline();
+            if (preg_match("/^[0-9]$/", $info->latest)) {
+                $value .= $info->latest;
+            } else {
+                $ansi->bell();
+            }
+
+            $ansi
+                ->cursorBack(9999)
+                ->eraseToEndOfLine()
+                ->text($prompt . $value)
+                ->flush();
+
+            return null;
+        });
+
+        if ($value === null) {
+            return null;
+        }
+
+        $converted = (int) $value;
+
+        if ($value !== (string) $converted) {
+            throw new RuntimeException(
+                'Integer overflow! allowed:±' . PHP_INT_MAX . ' given: ' . $value
+            );
+        }
+
+        return $converted;
     }
 
     /**
