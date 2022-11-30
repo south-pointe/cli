@@ -10,9 +10,12 @@ use function array_key_exists;
 use function array_keys;
 use function array_map;
 use function assert;
+use function filter_var;
+use function fopen;
 use function grapheme_strlen;
 use function is_resource;
 use function max;
+use function preg_match;
 use function readline_callback_handler_install;
 use function readline_callback_handler_remove;
 use function shell_exec;
@@ -23,6 +26,7 @@ use function stream_select;
 use function substr;
 use function system;
 use function trim;
+use const FILTER_VALIDATE_INT;
 use const PHP_INT_MAX;
 
 class Input
@@ -49,7 +53,7 @@ class Input
     {
         $ansi = $this->output->ansi;
         $value = null;
-        $this->readline($prompt, function(InputInfo $info) use ($ansi, $prompt, &$value) {
+        $this->readline($prompt, function(InputInfo $info) use ($ansi, &$value) {
             if ($info->done) {
                 return false;
             }
@@ -63,7 +67,7 @@ class Input
             $ansi
                 ->cursorBack(9999)
                 ->eraseToEndOfLine()
-                ->text($prompt . $value)
+                ->text($info->prompt . $value)
                 ->flush();
 
             return null;
@@ -73,12 +77,12 @@ class Input
             return null;
         }
 
-        $converted = (int) $value;
+        $converted = filter_var($value, FILTER_VALIDATE_INT);
 
-        if ($value !== (string) $converted) {
-            throw new RuntimeException(
-                'Integer overflow! allowed:±' . PHP_INT_MAX . ' given: ' . $value
-            );
+        // PHP converts all values greater than PHP_INT_MAX to PHP_INT_MAX
+        // so check that string value does not overflow.
+        if ($converted === false) {
+            throw new RuntimeException('Integer overflow! allowed:±' . PHP_INT_MAX . ' given: ' . $value);
         }
 
         return $converted;
