@@ -8,10 +8,12 @@ use SouthPointe\Ansi\Stream;
 class Output
 {
     /**
-     * @param Stream $ansi
+     * @param Stream $stdout
+     * @param Stream $stderr
      */
     public function __construct(
-        readonly public Stream $ansi,
+        readonly public Stream $stdout,
+        readonly public Stream $stderr,
     )
     {
     }
@@ -25,14 +27,14 @@ class Output
     public function text(string $text, ?Color $foreground = null, ?Color $background = null): static
     {
         if ($foreground !== null) {
-            $this->ansi->fgColor($foreground);
+            $this->stdout->fgColor($foreground);
         }
 
         if ($background !== null) {
-            $this->ansi->bgColor($background);
+            $this->stdout->bgColor($background);
         }
 
-        $this->ansi->text($text)
+        $this->stdout->text($text)
             ->resetStyle()
             ->flush();
 
@@ -46,8 +48,8 @@ class Output
     public function line(?string $text = null): static
     {
         $buffer = $text !== null
-            ? $this->ansi->line($text)
-            : $this->ansi->lineFeed();
+            ? $this->stdout->line($text)
+            : $this->stdout->lineFeed();
         $buffer->flush();
 
         return $this;
@@ -59,7 +61,7 @@ class Output
      */
     public function debug(string $text): static
     {
-        $this->ansi
+        $this->stdout
             ->fgColor(Color::Gray)
             ->line($text)
             ->flush();
@@ -82,7 +84,7 @@ class Output
      */
     public function notice(string $text): static
     {
-        $this->ansi
+        $this->stdout
             ->fgColor(Color::Green)
             ->line($text)
             ->flush();
@@ -96,7 +98,7 @@ class Output
      */
     public function warning(string $text): static
     {
-        $this->ansi
+        $this->stderr
             ->fgColor(Color::Yellow)
             ->line($text)
             ->flush();
@@ -110,9 +112,41 @@ class Output
      */
     public function error(string $text): static
     {
-        $this->ansi
+        $this->stderr
+            ->fgColor(Color::Red)
+            ->line($text)
+            ->resetStyle()
+            ->flush();
+
+        return $this;
+    }
+
+    /**
+     * @param string $text
+     * @return $this
+     */
+    public function critical(string $text): static
+    {
+        $this->stderr
             ->bgColor(Color::Red)
             ->fgColor(Color::White)
+            ->line($text)
+            ->resetStyle()
+            ->flush();
+
+        return $this;
+    }
+
+    /**
+     * @param string $text
+     * @return $this
+     */
+    public function alert(string $text): static
+    {
+        $this->stderr
+            ->bgColor(Color::Red)
+            ->fgColor(Color::White)
+            ->blink()
             ->line($text)
             ->resetStyle()
             ->flush();

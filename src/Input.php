@@ -51,7 +51,7 @@ class Input
 
     public function integer(string $prompt = ''): ?int
     {
-        $ansi = $this->output->ansi;
+        $ansi = $this->output->stdout;
         $value = null;
         $this->readline($prompt, function(InputInfo $info) use ($ansi, &$value) {
             if ($info->done) {
@@ -165,7 +165,7 @@ class Input
     public function masked(string $prompt = '', string $replacement = '*'): string
     {
         return $this->readline($prompt, function (InputInfo $info) use ($prompt, $replacement) {
-            $this->output->ansi
+            $this->output->stdout
                 // Clear all output up to the end of prompt text.
                 ->cursorBack(9999)->eraseToEndOfLine()
                 // Write replacement text (will set the cursor to the end).
@@ -187,7 +187,7 @@ class Input
     {
         $stream = $this->getInputStream();
         $info = new InputInfo($prompt);
-        $readline = new Readline($this->output->ansi, $info);
+        $readline = new Readline($this->output->stdout, $info);
 
         readline_callback_handler_install($prompt, static fn() => true);
         try {
