@@ -2,8 +2,10 @@
 
 namespace SouthPointe\Cli\Parameters;
 
-use SouthPointe\Cli\Definitions\DefinedParameter;
+use ReflectionClass;
 use RuntimeException;
+use SouthPointe\Cli\Definitions\DefinedParameter;
+use function count;
 use function sprintf;
 
 /**
@@ -31,9 +33,13 @@ abstract class Parameter
      */
     public function addValue(?string $value): void
     {
-        if (!$this->defined->isArray()) {
+        if (count($this->values) > 0 && !$this->defined->isArray()) {
             throw new RuntimeException(
-                sprintf('Option: %s does not accept array of inputs', $this->defined->getName())
+                sprintf(
+                    '%s: %s does not accept array of inputs',
+                    (new ReflectionClass($this))->getShortName(),
+                    $this->defined->getName(),
+                )
             );
         }
 

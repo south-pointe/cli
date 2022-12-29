@@ -2,9 +2,9 @@
 
 namespace SouthPointe\Cli;
 
+use RuntimeException;
 use SouthPointe\Cli\Definitions\ArgumentBuilder;
 use SouthPointe\Cli\Definitions\OptionBuilder;
-use RuntimeException;
 use function array_map;
 
 class CommandBuilder
@@ -13,6 +13,11 @@ class CommandBuilder
      * @var string|null
      */
     protected ?string $name = null;
+
+    /**
+     * @var string|null
+     */
+    protected ?string $description = null;
 
     /**
      * @var array<string, ArgumentBuilder>
@@ -31,12 +36,18 @@ class CommandBuilder
 
     /**
      * @param string $name
-     * @return $this
      */
-    public function name(string $name): static
+    public function name(string $name): void
     {
         $this->name = $name;
-        return $this;
+    }
+
+    /**
+     * @param string $description
+     */
+    public function description(string $description): void
+    {
+        $this->description = $description;
     }
 
     /**
@@ -86,6 +97,7 @@ class CommandBuilder
 
         return new CommandDefinition(
             $this->name,
+            $this->description,
             $arguments,
             $longOptions,
             $shortOptions,

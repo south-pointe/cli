@@ -2,11 +2,13 @@
 
 namespace SouthPointe\Cli\Parameters;
 
+use RuntimeException;
 use SouthPointe\Cli\CommandDefinition;
 use SouthPointe\Cli\Definitions\DefinedArgument;
 use SouthPointe\Cli\Definitions\DefinedOption;
-use RuntimeException;
+use SouthPointe\Cli\Exceptions\ParseException;
 use function array_key_exists;
+use function array_slice;
 use function count;
 use function explode;
 use function preg_match;
@@ -60,15 +62,14 @@ class ParameterParser
 
         while ($this->parameterCursor < $parameterCount) {
             $parameter = $this->parameters[$this->parameterCursor];
-
             match (true) {
                 $this->isLongOption($parameter) => $this->processLongOption($parameter),
                 $this->isShortOption($parameter) => $this->processShortOptions($parameter),
                 default => $this->processArgument($parameter),
             };
-
-            $this->parameterCursor++;
         }
+
+        $this->checkRemainingArguments();
 
         return [
             'arguments' => $this->enteredArguments,
@@ -210,6 +211,10 @@ class ParameterParser
     {
         $defined = $this->definition->getArgumentByIndex($this->argumentCursor);
 
+        if ($defined === null) {
+            throw new ParseException("Invalid Argument: \"{$parameter}\" at [{$this->argumentCursor}]");
+        }
+
         $this->addToArgument($defined, $parameter);
 
         if (!$defined->isArray()) {
@@ -217,6 +222,29 @@ class ParameterParser
         }
 
         $this->parameterCursor++;
+    }
+
+    /**
+     * @return void
+     */
+    protected function checkRemainingArguments(): void
+    {
+        $allArguments = $this->definition->getArguments();
+        $remainingArguments = array_slice($allArguments, $this->argumentCursor);
+        foreach ($remainingArguments as $argument) {
+            if ($argument->isArray() && isset($this->enteredArguments[$argument->getName()])) {
+                continue;
+            }
+
+            if (!$argument->isOptional()) {
+                throw new ParseException("Missing argument: " . $argument->getName());
+            }
+
+            $default = $argument->getDefault();
+            if ($default !== null) {
+                $this->addToArgument($argument, $default);
+            }
+        }
     }
 
     /**

@@ -2,7 +2,7 @@
 
 namespace SouthPointe\Cli;
 
-class CliHandler
+class CliManager
 {
     /**
      * @var array<int, Command>

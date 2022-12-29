@@ -27,6 +27,7 @@ class CommandDefinition
      */
     public function __construct(
         protected string $name,
+        protected ?string $description,
         array $arguments,
         protected array $longOptions,
         protected array $shortOptions,
@@ -45,6 +46,14 @@ class CommandDefinition
     }
 
     /**
+     * @return string|null
+     */
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    /**
      * @return array<string, DefinedArgument>
      */
     public function getArguments(): array
@@ -54,11 +63,11 @@ class CommandDefinition
 
     /**
      * @param int $index
-     * @return DefinedArgument
+     * @return DefinedArgument|null
      */
-    public function getArgumentByIndex(int $index): DefinedArgument
+    public function getArgumentByIndex(int $index): ?DefinedArgument
     {
-        return $this->argumentsByIndex[$index];
+        return $this->argumentsByIndex[$index] ?? null;
     }
 
     /**

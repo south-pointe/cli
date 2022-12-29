@@ -5,7 +5,7 @@ namespace SouthPointe\Cli\Parameters;
 use SouthPointe\Cli\Definitions\DefinedOption;
 
 /**
- * @template-extends Parameter<DefinedOption>
+ * @extends Parameter<DefinedOption>
  */
 class Option extends Parameter
 {
@@ -19,5 +19,13 @@ class Option extends Parameter
     )
     {
         parent::__construct($defined);
+    }
+
+    /**
+     * @return string
+     */
+    public function getEntered(): string
+    {
+        return $this->entered;
     }
 }

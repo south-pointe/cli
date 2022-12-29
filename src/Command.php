@@ -64,7 +64,7 @@ abstract class Command
             $parsed['options'],
         );
 
-        $code = $this->handle() ?? 0;
+        $code = $this->run() ?? 0;
 
         Assert::range($code, 0, 255);
 
@@ -76,5 +76,5 @@ abstract class Command
      *
      * @return int|null
      */
-    abstract public function handle(): mixed;
+    abstract public function run(): ?int;
 }
