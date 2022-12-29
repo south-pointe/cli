@@ -2,7 +2,8 @@
 
 namespace SouthPointe\Cli\Exceptions;
 
-use LogicException;
+
+use SouthPointe\Core\Exceptions\LogicException;
 
 class ParseException extends LogicException
 {

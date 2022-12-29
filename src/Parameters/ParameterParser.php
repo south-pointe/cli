@@ -212,7 +212,10 @@ class ParameterParser
         $defined = $this->definition->getArgumentByIndex($this->argumentCursor);
 
         if ($defined === null) {
-            throw new ParseException("Invalid Argument: \"{$parameter}\" at [{$this->argumentCursor}]");
+            throw new ParseException("Invalid Argument: \"{$parameter}\" at [{$this->argumentCursor}]", [
+                'parameters' => $this->parameters,
+                'cursor' => $this->argumentCursor,
+            ]);
         }
 
         $this->addToArgument($defined, $parameter);
@@ -237,7 +240,10 @@ class ParameterParser
             }
 
             if (!$argument->isOptional()) {
-                throw new ParseException("Missing argument: " . $argument->getName());
+                throw new ParseException("Missing argument: " . $argument->getName(), [
+                    'parameters' => $this->parameters,
+                    'argument' => $argument,
+                ]);
             }
 
             $default = $argument->getDefault();
