@@ -1,14 +1,15 @@
 {
   "name": "south-pointe/cli",
-  "description": "CLI for SouthPointe Framework",
+  "description": "CLI for South Pointe Framework",
   "type": "library",
   "license": "MIT",
   "require": {
-    "php": ">= 8.1",
+    "php": ">= 8.2",
     "ext-intl": "*",
     "ext-ctype": "*",
     "ext-readline": "*",
     "south-pointe/ansi": "dev-main",
+    "south-pointe/core": "dev-main",
     "webmozart/assert": "^1.11"
   },
   "require-dev": {
@@ -16,7 +17,7 @@
     "phpstan/phpstan": "^1.7",
     "phpstan/phpstan-webmozart-assert": "^1.1",
     "phpunit/phpunit": "~9.0",
-    "symfony/var-dumper": "^6"
+    "south-pointe/dumper": "dev-main"
   },
   "autoload": {
     "psr-4": {
