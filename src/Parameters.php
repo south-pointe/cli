@@ -23,9 +23,9 @@ class Parameters
      * @param string $name
      * @return bool
      */
-    public function hasArgument(string $name): bool
+    public function argumentEntered(string $name): bool
     {
-        return array_key_exists($name, $this->arguments);
+        return $this->arguments[$name]->wasEntered();
     }
 
     /**

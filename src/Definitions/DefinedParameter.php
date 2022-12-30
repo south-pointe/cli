@@ -9,14 +9,14 @@ abstract class DefinedParameter
      * @param string $description
      * @param bool $multiple
      * @param bool $optional
-     * @param string|null $default
+     * @param string|list<string>|null $default
      */
     public function __construct(
         protected readonly string $name,
         protected readonly string $description = '',
         protected readonly bool $multiple = false,
         protected readonly bool $optional = false,
-        protected readonly ?string $default = null,
+        protected readonly string|array|null $default = null,
     )
     {
     }
@@ -54,9 +54,17 @@ abstract class DefinedParameter
     }
 
     /**
-     * @return string|null
+     * @return bool
      */
-    public function getDefault(): ?string
+    public function hasDefault(): bool
+    {
+        return $this->optional || $this->default !== null;
+    }
+
+    /**
+     * @return string|list<string>|null
+     */
+    public function getDefault(): string|array|null
     {
         return $this->default;
     }

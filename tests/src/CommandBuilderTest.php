@@ -2,7 +2,6 @@
 
 namespace Tests\SouthPointe\Cli;
 
-use Prophecy\Prophecy\ObjectProphecy;
 use SouthPointe\Cli\CommandBuilder;
 use SouthPointe\Cli\Exceptions\ParseException;
 use SouthPointe\Cli\Parameters;
@@ -48,13 +47,6 @@ class CommandBuilderTest extends TestCase
         self::assertCount(0, $parameters->options);
     }
 
-    public function test_plain_undefined_arg(): void
-    {
-        $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Invalid Argument: "invalid" at [0]');
-        $this->parseBuilder($this->makeBuilder(), ['invalid']);
-    }
-
     public function test_argument(): void
     {
         $builder = $this->makeBuilder();
@@ -64,8 +56,25 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parameters->arguments);
         self::assertCount(0, $parameters->options);
 
-        self::assertTrue($parameters->hasArgument('a'));
-        self::assertSame('1', $parameters->getArgument('a'));
+        self::assertTrue($parameters->argumentEntered('a'));
+        self::assertSame(['1'], $parameters->getArgument('a')->getValues());
+    }
+
+    public function test_argument_missing(): void
+    {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Invalid Argument: "invalid" at [0]');
+        $this->parseBuilder($this->makeBuilder(), ['invalid']);
+    }
+
+    public function test_argument_missing_after_another_argument(): void
+    {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Invalid Argument: "3" at [2]');
+        $builder = $this->makeBuilder();
+        $builder->argument('a');
+        $builder->argument('b');
+        $this->parseBuilder($builder, ['1', '2', '3']);
     }
 
     public function test_argument_as_optional(): void
@@ -74,8 +83,8 @@ class CommandBuilderTest extends TestCase
         $builder->argument('a')->optional();
         $parameters = $this->parseBuilder($builder, []);
 
-        self::assertCount(0, $parameters->arguments);
-        self::assertFalse($parameters->hasArgument('a'));
+        self::assertCount(1, $parameters->arguments);
+        self::assertFalse($parameters->argumentEntered('a'));
     }
 
     public function test_argument_as_optional_with_default(): void
@@ -85,10 +94,10 @@ class CommandBuilderTest extends TestCase
         $parameters = $this->parseBuilder($builder, []);
 
         self::assertCount(1, $parameters->arguments);
-        self::assertTrue($parameters->hasArgument('a'));
+        self::assertFalse($parameters->argumentEntered('a'));
     }
 
-    public function test_argument_disallow_multi(): void
+    public function test_argument_overflow(): void
     {
         $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Invalid Argument: "2" at [1]');
@@ -105,5 +114,38 @@ class CommandBuilderTest extends TestCase
 
         self::assertCount(1, $parameters->arguments);
         self::assertCount(0, $parameters->options);
+    }
+
+    public function test_argument_multi_after_single(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->argument('a');
+        $builder->argument('b')->allowMultiple();
+        $parameters = $this->parseBuilder($builder, ['1', '2', '3']);
+
+        self::assertCount(2, $parameters->arguments);
+        self::assertSame(['1'], $parameters->getArgument('a')->getValues());
+        self::assertSame(['2', '3'], $parameters->getArgument('b')->getValues());
+    }
+
+    public function test_argument_single_after_multi(): void
+    {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Missing required argument: b');
+        $builder = $this->makeBuilder();
+        $builder->argument('a')->allowMultiple();
+        $builder->argument('b');
+        $this->parseBuilder($builder, ['1', '2', '3']);
+    }
+
+    public function test_argument_single_with_default_after_multi(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->argument('a')->allowMultiple();
+        $builder->argument('b')->optional('4');
+        $parameters = $this->parseBuilder($builder, ['1', '2', '3']);
+
+        self::assertSame(['1', '2', '3'], $parameters->getArgument('a')->getValues());
+        self::assertSame(['4'], $parameters->getArgument('b')->getValues());
     }
 }

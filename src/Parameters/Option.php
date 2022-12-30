@@ -11,21 +11,21 @@ class Option extends Parameter
 {
     /**
      * @param DefinedOption $defined
-     * @param string $entered
+     * @param string|null $enteredName
      */
     public function __construct(
         DefinedOption $defined,
-        protected readonly string $entered,
+        protected readonly ?string $enteredName = null,
     )
     {
-        parent::__construct($defined);
+        parent::__construct($defined, $this->enteredName !== null);
     }
 
     /**
-     * @return string
+     * @return string|null
      */
-    public function getEntered(): string
+    public function getEnteredName(): ?string
     {
-        return $this->entered;
+        return $this->enteredName;
     }
 }

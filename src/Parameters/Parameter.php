@@ -3,8 +3,9 @@
 namespace SouthPointe\Cli\Parameters;
 
 use ReflectionClass;
-use RuntimeException;
 use SouthPointe\Cli\Definitions\DefinedParameter;
+use SouthPointe\Core\Exceptions\RuntimeException;
+use function array_key_exists;
 use function count;
 use function sprintf;
 
@@ -14,15 +15,16 @@ use function sprintf;
 abstract class Parameter
 {
     /**
-     * @var list<string|null>
+     * @var list<string|null>|null
      */
-    protected array $values = [];
+    protected ?array $values = null;
 
     /**
      * @param TDefined $defined
      */
     public function __construct(
         protected readonly DefinedParameter $defined,
+        protected readonly bool $wasEntered,
     )
     {
     }
@@ -33,6 +35,8 @@ abstract class Parameter
      */
     public function addValue(?string $value): void
     {
+        $this->values ??= [];
+
         if (count($this->values) > 0 && !$this->defined->isArray()) {
             throw new RuntimeException(
                 sprintf(
@@ -55,10 +59,36 @@ abstract class Parameter
     }
 
     /**
+     * @return bool
+     */
+    public function wasEntered(): bool
+    {
+        return $this->wasEntered;
+    }
+
+    /**
+     * @param int $at
+     * @return string|null
+     */
+    public function getValue(int $at = 0): ?string
+    {
+        $values = $this->getValues();
+
+        if (!array_key_exists($at, $values)) {
+            throw new RuntimeException("No values exists at [{$at}]", [
+                'at' => $at,
+                'values' => $values,
+            ]);
+        }
+
+        return $values[$at];
+    }
+
+    /**
      * @return list<string|null>
      */
     public function getValues(): array
     {
-        return $this->values;
+        return $this->values ?? [];
     }
 }
