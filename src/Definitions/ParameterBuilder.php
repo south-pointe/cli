@@ -5,11 +5,6 @@ namespace SouthPointe\Cli\Definitions;
 class ParameterBuilder
 {
     /**
-     * @var bool
-     */
-    protected bool $multiple = false;
-
-    /**
      * @var string
      */
     protected string $description = '';
@@ -17,15 +12,18 @@ class ParameterBuilder
     /**
      * @var bool
      */
-    protected bool $optional = false;
+    protected bool $multiple = false;
 
     /**
-     * @var string|null
+     * @var string|list<string>|null
      */
-    protected ?string $default = null;
+    protected string|array|null $default = null;
 
+    /**
+     * @param string $name
+     */
     public function __construct(
-        protected string $name
+        protected string $name,
     )
     {
     }
@@ -47,17 +45,6 @@ class ParameterBuilder
     public function description(string $text): static
     {
         $this->description = $text;
-        return $this;
-    }
-
-    /**
-     * @param string|null $default
-     * @return $this
-     */
-    public function optional(string $default = null): static
-    {
-        $this->optional = true;
-        $this->default = $default;
         return $this;
     }
 }

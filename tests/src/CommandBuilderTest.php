@@ -210,6 +210,17 @@ class CommandBuilderTest extends TestCase
         self::assertSame([null], $parameters->getOption('all')->getValues());
     }
 
+    public function test_option__long__no_value__default(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->option('all')->optional();
+        $parameters = $this->parseBuilder($builder, ['--all']);
+        self::assertCount(1, $parameters->options);
+        self::assertTrue($parameters->getOption('all')->wasEntered());
+        self::assertSame('all', $parameters->getOption('all')->getEnteredName());
+        self::assertSame([null], $parameters->getOption('all')->getValues());
+    }
+
     public function test_option__long__spaced_value(): void
     {
         $builder = $this->makeBuilder();
@@ -257,6 +268,8 @@ class CommandBuilderTest extends TestCase
 
     public function test_option__short__equal_value(): void
     {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Option: -a (--all) invalid value: "=text"');
         $builder = $this->makeBuilder();
         $builder->option('all', 'a');
         $this->parseBuilder($builder, ['-a=text']);

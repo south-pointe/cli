@@ -5,23 +5,20 @@ namespace SouthPointe\Cli\Definitions;
 class OptionBuilder extends ParameterBuilder
 {
     /**
-     * @var string|null
-     */
-    protected ?string $short = null;
-
-    /**
      * @var bool
      */
-    private bool $requireValue = false;
+    protected bool $requireValue = false;
 
     /**
      * @param string $name
      * @param string|null $short
      */
-    public function __construct(string $name, ?string $short = null)
+    public function __construct(
+        string $name,
+        protected ?string $short = null,
+    )
     {
         parent::__construct($name);
-        $this->short = $short;
     }
 
     /**
@@ -31,6 +28,16 @@ class OptionBuilder extends ParameterBuilder
     public function requireValue(bool $toggle = true): static
     {
         $this->requireValue = $toggle;
+        return $this;
+    }
+
+    /**
+     * @param string|list<string>|null $value
+     * @return $this
+     */
+    public function default(string|array|null $value): static
+    {
+        $this->default = $value;
         return $this;
     }
 
@@ -45,7 +52,6 @@ class OptionBuilder extends ParameterBuilder
             $this->description,
             $this->requireValue,
             $this->multiple,
-            $this->optional,
             $this->default,
         );
     }

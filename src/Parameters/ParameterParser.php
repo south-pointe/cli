@@ -151,7 +151,7 @@ class ParameterParser
 
         $value ??= $defined->getDefault();
 
-        if ($defined->requireValue()) {
+        if ($defined->valueRequired()) {
             throw new ParseException("Value is required for option: {$name}", [
                 'option' => $defined,
                 'parameter' => $parameter,
@@ -209,7 +209,7 @@ class ParameterParser
 
             // if next char is not an option, assume it's an argument.
             $remainingChars = substr($chars, $i + 1);
-            if ($defined->requireValue()) {
+            if ($defined->valueRequired()) {
                 $this->addAsOption($defined, $char, $remainingChars);
                 $this->parameterCursor++;
                 break;
