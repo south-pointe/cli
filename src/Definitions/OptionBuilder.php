@@ -25,15 +25,6 @@ class OptionBuilder extends ParameterBuilder
     }
 
     /**
-     * @return $this
-     */
-    public function noValue(): static
-    {
-        $this->requireValue(false);
-        return $this;
-    }
-
-    /**
      * @param bool $toggle
      * @return $this
      */

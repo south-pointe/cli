@@ -87,14 +87,64 @@ class CommandBuilderTest extends TestCase
         self::assertFalse($parameters->argumentEntered('a'));
     }
 
-    public function test_argument_as_optional_with_default(): void
+    public function test_argument_as_optional_with_default_fallback(): void
     {
         $builder = $this->makeBuilder();
-        $builder->argument('a')->optional('default');
+        $builder->argument('a')->optional('1');
         $parameters = $this->parseBuilder($builder, []);
 
         self::assertCount(1, $parameters->arguments);
         self::assertFalse($parameters->argumentEntered('a'));
+        self::assertSame(['1'], $parameters->getArgument('a')->getValues());
+    }
+
+    public function test_argument_as_optional_with_default(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->argument('a')->optional('1');
+        $parameters = $this->parseBuilder($builder, ['x']);
+
+        self::assertCount(1, $parameters->arguments);
+        self::assertTrue($parameters->argumentEntered('a'));
+        self::assertSame(['x'], $parameters->getArgument('a')->getValues());
+    }
+
+    public function test_argument_with_multiple_definitions_with_optional_first_with_fallback(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->argument('a')->optional('1');
+        $builder->argument('b');
+        $parameters = $this->parseBuilder($builder, ['x', 'y']);
+
+        self::assertCount(2, $parameters->arguments);
+        self::assertTrue($parameters->argumentEntered('a'));
+        self::assertTrue($parameters->argumentEntered('b'));
+        self::assertSame(['x'], $parameters->getArgument('a')->getValues());
+        self::assertSame(['y'], $parameters->getArgument('b')->getValues());
+    }
+
+    public function test_argument_with_multiple_definitions_with_optional_first(): void
+    {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Missing required argument: b');
+        $builder = $this->makeBuilder();
+        $builder->argument('a')->optional('1');
+        $builder->argument('b');
+        $this->parseBuilder($builder, []);
+    }
+
+    public function test_argument_with_multiple_definitions_with_optionals_no_entry(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->argument('a')->optional('1');
+        $builder->argument('b')->optional('2');
+        $parameters = $this->parseBuilder($builder, []);
+
+        self::assertCount(2, $parameters->arguments);
+        self::assertFalse($parameters->argumentEntered('a'));
+        self::assertFalse($parameters->argumentEntered('b'));
+        self::assertSame(['1'], $parameters->getArgument('a')->getValues());
+        self::assertSame(['2'], $parameters->getArgument('b')->getValues());
     }
 
     public function test_argument_overflow(): void
@@ -147,5 +197,68 @@ class CommandBuilderTest extends TestCase
 
         self::assertSame(['1', '2', '3'], $parameters->getArgument('a')->getValues());
         self::assertSame(['4'], $parameters->getArgument('b')->getValues());
+    }
+
+    public function test_option__long__no_value(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->option('all');
+        $parameters = $this->parseBuilder($builder, ['--all']);
+        self::assertCount(1, $parameters->options);
+        self::assertTrue($parameters->getOption('all')->wasEntered());
+        self::assertSame('all', $parameters->getOption('all')->getEnteredName());
+        self::assertSame([null], $parameters->getOption('all')->getValues());
+    }
+
+    public function test_option__long__spaced_value(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->option('all');
+        $parameters = $this->parseBuilder($builder, ['--all', 'text']);
+        self::assertCount(1, $parameters->options);
+        self::assertTrue($parameters->getOption('all')->wasEntered());
+        self::assertSame('all', $parameters->getOption('all')->getEnteredName());
+        self::assertSame(['text'], $parameters->getOption('all')->getValues());
+    }
+
+    public function test_option__long__equal_value(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->option('all');
+        $parameters = $this->parseBuilder($builder, ['--all=text']);
+        self::assertCount(0, $parameters->arguments);
+        self::assertCount(1, $parameters->options);
+        self::assertTrue($parameters->getOption('all')->wasEntered());
+        self::assertSame('all', $parameters->getOption('all')->getEnteredName());
+        self::assertSame(['text'], $parameters->getOption('all')->getValues());
+    }
+
+    public function test_option__short__no_value(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->option('all', 'a');
+        $parameters = $this->parseBuilder($builder, ['-a']);
+        self::assertCount(1, $parameters->options);
+        self::assertTrue($parameters->getOption('all')->wasEntered());
+        self::assertSame('a', $parameters->getOption('all')->getEnteredName());
+        self::assertSame([null], $parameters->getOption('all')->getValues());
+    }
+
+    public function test_option__short__spaced_value(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->option('all', 'a');
+        $parameters = $this->parseBuilder($builder, ['-a', 'text']);
+        self::assertCount(1, $parameters->options);
+        self::assertTrue($parameters->getOption('all')->wasEntered());
+        self::assertSame('a', $parameters->getOption('all')->getEnteredName());
+        self::assertSame(['text'], $parameters->getOption('all')->getValues());
+    }
+
+    public function test_option__short__equal_value(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->option('all', 'a');
+        $this->parseBuilder($builder, ['-a=text']);
     }
 }

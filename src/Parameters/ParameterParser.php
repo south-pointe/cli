@@ -6,8 +6,6 @@ use SouthPointe\Cli\CommandDefinition;
 use SouthPointe\Cli\Definitions\DefinedArgument;
 use SouthPointe\Cli\Definitions\DefinedOption;
 use SouthPointe\Cli\Exceptions\ParseException;
-use SouthPointe\Core\Exceptions\LogicException;
-use SouthPointe\Core\Exceptions\RuntimeException;
 use function array_key_exists;
 use function array_slice;
 use function count;
@@ -16,7 +14,6 @@ use function is_array;
 use function is_null;
 use function is_string;
 use function preg_match;
-use function sprintf;
 use function str_starts_with;
 use function strlen;
 use function substr;
@@ -162,6 +159,8 @@ class ParameterParser
         }
 
         $this->addAsOption($defined, $name, $value);
+
+        $this->parameterCursor++;
     }
 
     /**
@@ -177,7 +176,11 @@ class ParameterParser
             $defined = $this->getDefinedShortOption($char);
 
             if ($defined === null) {
-                throw new RuntimeException(sprintf('Undefined option: %s', $char));
+                throw new ParseException("Undefined option: {$char}", [
+                    'parameters' => $this->parameters,
+                    'cursor' => $this->parameterCursor,
+                    'char' => $char,
+                ]);
             }
 
             $nextChar = $chars[$i + 1] ?? false;
@@ -193,23 +196,31 @@ class ParameterParser
                         $this->addAsOption($defined, $char, null);
                     }
                 }
+                $this->parameterCursor++;
                 break;
             }
 
             // if next char is another option, add the current option and move on.
             if ($this->definition->shortOptionExists($nextChar)) {
                 $this->addAsOption($defined, $char, $defined->getDefault());
+                $this->parameterCursor++;
                 continue;
             }
 
             // if next char is not an option, assume it's an argument.
-            $remainingChars = substr($chars, $i);
+            $remainingChars = substr($chars, $i + 1);
             if ($defined->requireValue()) {
                 $this->addAsOption($defined, $char, $remainingChars);
+                $this->parameterCursor++;
                 break;
             }
 
-            throw new RuntimeException(sprintf('option: "-%s" does not accept values: "%s"', $char, $remainingChars));
+            throw new ParseException("Option: -{$char} (--{$defined->getName()}) invalid value: \"{$remainingChars}\"", [
+                'option' => $defined,
+                'parameters' => $this->parameters,
+                'cursor' => $this->parameterCursor,
+                'char' => $char,
+            ]);
         }
     }
 
@@ -341,7 +352,7 @@ class ParameterParser
         $default = $argument->getDefault();
         if ($argument->isArray()) {
             if (!is_array($default)) {
-                throw new LogicException("Argument: {$name}'s default value must be an array, since it's a multi argument.", [
+                throw new ParseException("Argument: {$name}'s default value must be an array, since it's a multi argument.", [
                     'argument' => $argument,
                     'default' => $default,
                 ]);
@@ -351,7 +362,7 @@ class ParameterParser
             }
         } else {
             if (!is_string($default) && !is_null($default)) {
-                throw new LogicException("Argument: {$name}'s default value must be defined as string.", [
+                throw new ParseException("Argument: {$name}'s default value must be defined as string.", [
                     'argument' => $argument,
                     'default' => $default,
                 ]);
