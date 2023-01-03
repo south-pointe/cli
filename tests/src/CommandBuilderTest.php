@@ -63,14 +63,14 @@ class CommandBuilderTest extends TestCase
     public function test_argument_missing(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Invalid Argument: "invalid" at [0]');
+        $this->expectExceptionMessage('Argument [0: "invalid"] is not defined.');
         $this->parseBuilder($this->makeBuilder(), ['invalid']);
     }
 
     public function test_argument_missing_after_another_argument(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Invalid Argument: "3" at [2]');
+        $this->expectExceptionMessage('Argument [2: "3"] is not defined.');
         $builder = $this->makeBuilder();
         $builder->argument('a');
         $builder->argument('b');
@@ -150,7 +150,7 @@ class CommandBuilderTest extends TestCase
     public function test_argument_overflow(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Invalid Argument: "2" at [1]');
+        $this->expectExceptionMessage('Argument [1: "2"] is not defined.');
         $builder = $this->makeBuilder();
         $builder->argument('a');
         $this->parseBuilder($builder, ['1', '2']);
@@ -199,6 +199,14 @@ class CommandBuilderTest extends TestCase
         self::assertSame(['4'], $parameters->getArgument('b')->getValues());
     }
 
+    public function test_option__long__undefined(): void
+    {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Option: [--all] is not defined.');
+        $builder = $this->makeBuilder();
+        $this->parseBuilder($builder, ['--all']);
+    }
+
     public function test_option__long__no_value(): void
     {
         $builder = $this->makeBuilder();
@@ -213,12 +221,21 @@ class CommandBuilderTest extends TestCase
     public function test_option__long__no_value__default(): void
     {
         $builder = $this->makeBuilder();
-        $builder->option('all')->optional();
+        $builder->option('all')->requireValue('d');
         $parameters = $this->parseBuilder($builder, ['--all']);
         self::assertCount(1, $parameters->options);
         self::assertTrue($parameters->getOption('all')->wasEntered());
         self::assertSame('all', $parameters->getOption('all')->getEnteredName());
-        self::assertSame([null], $parameters->getOption('all')->getValues());
+        self::assertSame(['d'], $parameters->getOption('all')->getValues());
+    }
+
+    public function test_option__long__no_value__value_required(): void
+    {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Option: [--all] requires a value');
+        $builder = $this->makeBuilder();
+        $builder->option('all')->requireValue();
+        $this->parseBuilder($builder, ['--all']);
     }
 
     public function test_option__long__spaced_value(): void
@@ -242,6 +259,14 @@ class CommandBuilderTest extends TestCase
         self::assertTrue($parameters->getOption('all')->wasEntered());
         self::assertSame('all', $parameters->getOption('all')->getEnteredName());
         self::assertSame(['text'], $parameters->getOption('all')->getValues());
+    }
+
+    public function test_option__short__undefined(): void
+    {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Option: [-a] is not defined.');
+        $builder = $this->makeBuilder();
+        $this->parseBuilder($builder, ['-a']);
     }
 
     public function test_option__short__no_value(): void
@@ -269,7 +294,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__short__equal_value(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Option: -a (--all) invalid value: "=text"');
+        $this->expectExceptionMessage('[option: -a (--all)] invalid value: "=text"');
         $builder = $this->makeBuilder();
         $builder->option('all', 'a');
         $this->parseBuilder($builder, ['-a=text']);

@@ -7,7 +7,7 @@ class OptionBuilder extends ParameterBuilder
     /**
      * @var bool
      */
-    protected bool $requireValue = false;
+    protected bool $valueRequired = false;
 
     /**
      * @param string $name
@@ -22,26 +22,6 @@ class OptionBuilder extends ParameterBuilder
     }
 
     /**
-     * @param bool $toggle
-     * @return $this
-     */
-    public function requireValue(bool $toggle = true): static
-    {
-        $this->requireValue = $toggle;
-        return $this;
-    }
-
-    /**
-     * @param string|list<string>|null $value
-     * @return $this
-     */
-    public function default(string|array|null $value): static
-    {
-        $this->default = $value;
-        return $this;
-    }
-
-    /**
      * @return DefinedOption
      */
     public function build(): DefinedOption
@@ -50,9 +30,30 @@ class OptionBuilder extends ParameterBuilder
             $this->name,
             $this->short,
             $this->description,
-            $this->requireValue,
+            $this->valueRequired,
             $this->multiple,
             $this->default,
         );
+    }
+
+    /**
+     * @param string|list<string>|null $default
+     * @return $this
+     */
+    public function requireValue(string|array|null $default = null): static
+    {
+        $this->valueRequired = true;
+        $this->default = $default;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    public function noValue(): static
+    {
+        $this->valueRequired = false;
+        $this->default = null;
+        return $this;
     }
 }

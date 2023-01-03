@@ -24,10 +24,10 @@ class ArgumentBuilder extends ParameterBuilder
     }
 
     /**
-     * @param string|null $default
+     * @param string|list<string>|null $default
      * @return $this
      */
-    public function optional(string $default = null): static
+    public function optional(string|array|null $default = null): static
     {
         $this->optional = true;
         $this->default = $default;

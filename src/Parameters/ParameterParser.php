@@ -134,7 +134,7 @@ class ParameterParser
         $defined = $this->getDefinedLongOption($name);
 
         if ($defined === null) {
-            throw new ParseException("Undefined option: {$name}", [
+            throw new ParseException("Option: [--{$name}] is not defined.", [
                 'parameters' => $this->parameters,
                 'parameter' => $parameter,
             ]);
@@ -151,8 +151,8 @@ class ParameterParser
 
         $value ??= $defined->getDefault();
 
-        if ($defined->valueRequired()) {
-            throw new ParseException("Value is required for option: {$name}", [
+        if ($value === null && $defined->valueRequired()) {
+            throw new ParseException("Option: [--{$name}] requires a value.", [
                 'option' => $defined,
                 'parameter' => $parameter,
             ]);
@@ -176,7 +176,7 @@ class ParameterParser
             $defined = $this->getDefinedShortOption($char);
 
             if ($defined === null) {
-                throw new ParseException("Undefined option: {$char}", [
+                throw new ParseException("Option: [-{$char}] is not defined.", [
                     'parameters' => $this->parameters,
                     'cursor' => $this->parameterCursor,
                     'char' => $char,
@@ -215,7 +215,7 @@ class ParameterParser
                 break;
             }
 
-            throw new ParseException("Option: -{$char} (--{$defined->getName()}) invalid value: \"{$remainingChars}\"", [
+            throw new ParseException("[option: -{$char} (--{$defined->getName()})] invalid value: \"{$remainingChars}\"", [
                 'option' => $defined,
                 'parameters' => $this->parameters,
                 'cursor' => $this->parameterCursor,
@@ -233,7 +233,7 @@ class ParameterParser
         $defined = $this->definition->getArgumentByIndex($this->argumentCursor);
 
         if ($defined === null) {
-            throw new ParseException("Invalid Argument: \"{$parameter}\" at [{$this->argumentCursor}]", [
+            throw new ParseException("Argument [{$this->argumentCursor}: \"{$parameter}\"] is not defined.", [
                 'parameters' => $this->parameters,
                 'cursor' => $this->argumentCursor,
             ]);
@@ -267,9 +267,7 @@ class ParameterParser
                 ]);
             }
 
-            if ($argument->hasDefault()) {
-                $this->addAsDefaultArgument($argument);
-            }
+            $this->addAsDefaultArgument($argument);
         }
     }
 
@@ -279,7 +277,9 @@ class ParameterParser
      */
     protected function getDefinedLongOption(string $name): ?DefinedOption
     {
-        return $this->checkOptionCount($this->definition->getLongOption($name));
+        return $this->definition->longOptionExists($name)
+            ? $this->checkOptionCount($this->definition->getLongOption($name))
+            : null;
     }
 
     /**
@@ -288,7 +288,9 @@ class ParameterParser
      */
     protected function getDefinedShortOption(string $name): ?DefinedOption
     {
-        return $this->checkOptionCount($this->definition->getShortOption($name));
+        return $this->definition->shortOptionExists($name)
+            ? $this->checkOptionCount($this->definition->getShortOption($name))
+            : null;
     }
 
     /**

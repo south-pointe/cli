@@ -12,7 +12,7 @@ class DefinedArgument extends DefinedParameter
      * @param string|list<string>|null $default
      */
     public function __construct(
-        protected readonly string $name,
+        string $name,
         string $description = '',
         bool $multiple = false,
         protected readonly bool $optional = false,

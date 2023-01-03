@@ -81,6 +81,15 @@ class CommandDefinition
 
     /**
      * @param string $name
+     * @return bool
+     */
+    public function longOptionExists(string $name): bool
+    {
+        return array_key_exists($name, $this->longOptions);
+    }
+
+    /**
+     * @param string $name
      * @return DefinedOption
      */
     public function getLongOption(string $name): DefinedOption
