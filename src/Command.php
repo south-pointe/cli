@@ -2,6 +2,8 @@
 
 namespace SouthPointe\Cli;
 
+use SouthPointe\Cli\Parameters\Argument;
+use SouthPointe\Cli\Parameters\Option;
 use SouthPointe\Cli\Parameters\ParameterParser;
 use Webmozart\Assert\Assert;
 
@@ -13,9 +15,14 @@ abstract class Command
     protected readonly CommandDefinition $definition;
 
     /**
-     * @var Parameters
+     * @var array<string, Argument>
      */
-    protected Parameters $parameters;
+    protected array $arguments;
+
+    /**
+     * @var array<string, Option>
+     */
+    protected array $options;
 
     /**
      * @var Input
@@ -53,16 +60,12 @@ abstract class Command
     public function execute(Input $input, Output $output, array $rawParameters): int
     {
         $this->input = $input;
-
         $this->output = $output;
 
         $parser = new ParameterParser($this->definition, $rawParameters);
         $parsed = $parser->parse();
-
-        $this->parameters = new Parameters(
-            $parsed['arguments'],
-            $parsed['options'],
-        );
+        $this->arguments = $parsed['arguments'];
+        $this->options = $parsed['options'];
 
         $code = $this->run() ?? 0;
 
