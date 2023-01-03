@@ -2,10 +2,10 @@
 
 namespace SouthPointe\Cli\Parameters;
 
-use SouthPointe\Cli\Definitions\DefinedArgument;
+use SouthPointe\Cli\Definitions\ArgumentDefinition;
 
 /**
- * @extends Parameter<DefinedArgument>
+ * @extends Parameter<ArgumentDefinition>
  */
 class Argument extends Parameter
 {

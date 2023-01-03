@@ -12,7 +12,7 @@ class ParameterBuilder
     /**
      * @var bool
      */
-    protected bool $multiple = false;
+    protected bool $allowMultiple = false;
 
     /**
      * @var string|list<string>|null
@@ -34,7 +34,7 @@ class ParameterBuilder
      */
     public function allowMultiple(bool $toggle = true): static
     {
-        $this->multiple = $toggle;
+        $this->allowMultiple = $toggle;
         return $this;
     }
 

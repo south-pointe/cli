@@ -2,10 +2,10 @@
 
 namespace SouthPointe\Cli\Parameters;
 
-use SouthPointe\Cli\Definitions\DefinedOption;
+use SouthPointe\Cli\Definitions\OptionDefinition;
 
 /**
- * @extends Parameter<DefinedOption>
+ * @extends Parameter<OptionDefinition>
  */
 class Option extends Parameter
 {

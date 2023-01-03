@@ -22,16 +22,16 @@ class OptionBuilder extends ParameterBuilder
     }
 
     /**
-     * @return DefinedOption
+     * @return OptionDefinition
      */
-    public function build(): DefinedOption
+    public function build(): OptionDefinition
     {
-        return new DefinedOption(
+        return new OptionDefinition(
             $this->name,
             $this->short,
             $this->description,
             $this->valueRequired,
-            $this->multiple,
+            $this->allowMultiple,
             $this->default,
         );
     }

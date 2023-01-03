@@ -10,14 +10,14 @@ class ArgumentBuilder extends ParameterBuilder
     protected bool $optional = false;
 
     /**
-     * @return DefinedArgument
+     * @return ArgumentDefinition
      */
-    public function build(): DefinedArgument
+    public function build(): ArgumentDefinition
     {
-        return new DefinedArgument(
+        return new ArgumentDefinition(
             $this->name,
             $this->description,
-            $this->multiple,
+            $this->allowMultiple,
             $this->optional,
             $this->default,
         );

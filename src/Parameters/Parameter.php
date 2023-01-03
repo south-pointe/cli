@@ -2,15 +2,12 @@
 
 namespace SouthPointe\Cli\Parameters;
 
-use ReflectionClass;
-use SouthPointe\Cli\Definitions\DefinedParameter;
+use SouthPointe\Cli\Definitions\ParameterDefinition;
 use SouthPointe\Core\Exceptions\RuntimeException;
 use function array_key_exists;
-use function count;
-use function sprintf;
 
 /**
- * @template TDefined as DefinedParameter
+ * @template TDefined as ParameterDefinition
  */
 abstract class Parameter
 {
@@ -19,38 +16,17 @@ abstract class Parameter
      * @param list<string|null>|null $values
      */
     public function __construct(
-        protected readonly DefinedParameter $defined,
+        protected readonly ParameterDefinition $defined,
         protected readonly bool $wasEntered,
-        protected ?array $values = null,
+        protected readonly ?array $values = null,
     )
     {
     }
 
     /**
-     * @param string|null $value
-     * @return void
-     */
-    public function addValue(?string $value): void
-    {
-        $this->values ??= [];
-
-        if (count($this->values) > 0 && !$this->defined->isArray()) {
-            throw new RuntimeException(
-                sprintf(
-                    '%s: %s does not accept array of inputs',
-                    (new ReflectionClass($this))->getShortName(),
-                    $this->defined->getName(),
-                )
-            );
-        }
-
-        $this->values[] = $value;
-    }
-
-    /**
      * @return TDefined
      */
-    public function getDefinition(): DefinedParameter
+    public function getDefinition(): ParameterDefinition
     {
         return $this->defined;
     }

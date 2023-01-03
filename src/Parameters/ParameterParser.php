@@ -3,11 +3,10 @@
 namespace SouthPointe\Cli\Parameters;
 
 use SouthPointe\Cli\CommandDefinition;
-use SouthPointe\Cli\Definitions\DefinedArgument;
-use SouthPointe\Cli\Definitions\DefinedOption;
+use SouthPointe\Cli\Definitions\ArgumentDefinition;
+use SouthPointe\Cli\Definitions\OptionDefinition;
 use SouthPointe\Cli\Exceptions\ParseException;
 use function array_diff_key;
-use function array_key_exists;
 use function array_slice;
 use function count;
 use function explode;
@@ -37,9 +36,14 @@ class ParameterParser
     protected array $parsedArguments = [];
 
     /**
-     * @var array<string, Option>
+     * @var array<string, list<mixed>>
      */
-    protected array $parsedOptions = [];
+    protected array $argumentValues = [];
+
+    /**
+     * @var array<string, list<mixed>>
+     */
+    protected array $optionValues = [];
 
     /**
      * @param CommandDefinition $definition
@@ -71,12 +75,27 @@ class ParameterParser
             };
         }
 
-        $this->addRemainingArguments();
-        $this->addRemainingOptions();
+        $arguments = [];
+        foreach ($this->argumentValues as $name => $values) {
+            $defined = $this->definition->getArgumentByName($name);
+            $arguments[$name] = new Argument($defined, true, $values);
+        }
+        $arguments = $this->appendRemainingArguments($arguments);
+
+        $options = [];
+        foreach ($this->optionValues as $name => $values) {
+            $defined = $this->getDefinedLongOption($name);
+            $options[$name] = new Option($defined, true, $values);
+        }
+        $all = $this->definition->getLongOptions();
+        $remaining = array_diff_key($all, $options);
+        foreach ($remaining as $name => $defined) {
+            $options[$name] = $this->makeDefaultOption($defined);
+        }
 
         return [
-            'arguments' => $this->parsedArguments,
-            'options' => $this->parsedOptions,
+            'arguments' => $arguments,
+            'options' => $options,
         ];
     }
 
@@ -135,13 +154,6 @@ class ParameterParser
 
         $defined = $this->getDefinedLongOption($name);
 
-        if ($defined === null) {
-            throw new ParseException("Option: [--{$name}] is not defined.", [
-                'parameters' => $this->parameters,
-                'parameter' => $parameter,
-            ]);
-        }
-
         if ($value === null && $this->hasMoreParameters()) {
             // look at the next parameter to check if it's a value
             $nextParameter = $this->nextParameterOrNull();
@@ -151,16 +163,16 @@ class ParameterParser
             }
         }
 
-        $value ??= $defined->getDefault();
+        $value ??= $defined->default;
 
-        if ($value === null && $defined->valueRequired()) {
+        if ($value === null && $defined->valueRequired) {
             throw new ParseException("Option: [--{$name}] requires a value.", [
                 'option' => $defined,
                 'parameter' => $parameter,
             ]);
         }
 
-        $this->addAsOption($defined, $value);
+        $this->addOptionValue($defined, $value);
 
         $this->parameterCursor++;
     }
@@ -177,55 +189,47 @@ class ParameterParser
             $char = $chars[$i];
             $defined = $this->getDefinedShortOption($char);
 
-            if ($defined === null) {
-                throw new ParseException("Option: [-{$char}] is not defined.", [
-                    'parameters' => $this->parameters,
-                    'cursor' => $this->parameterCursor,
-                    'char' => $char,
-                ]);
-            }
-
             $nextChar = $chars[$i + 1] ?? false;
 
             // on the last char, no need to go further.
             if ($nextChar === false) {
                 $nextParameter = $this->nextParameterOrNull();
                 if ($nextParameter !== null && $this->isNotAnOption($nextParameter)) {
-                    $this->addAsOption($defined, $nextParameter);
+                    $this->addOptionValue($defined, $nextParameter);
                     $this->parameterCursor+= 2;
                     break;
                 }
 
-                $default = $defined->getDefault();
+                $default = $defined->default;
 
-                if ($default === null && $defined->valueRequired()) {
+                if ($default === null && $defined->valueRequired) {
                     throw new ParseException("Option: [-{$char}] requires a value.", [
                         'option' => $defined,
                         'parameter' => $parameter,
                     ]);
                 }
 
-                $this->addAsOption($defined, $default);
+                $this->addOptionValue($defined, $default);
                 $this->parameterCursor++;
                 break;
             }
 
             // if next char is another option, add the current option and move on.
             if ($this->definition->shortOptionExists($nextChar)) {
-                $this->addAsOption($defined, $defined->getDefault());
+                $this->addOptionValue($defined, $defined->default);
                 $this->parameterCursor++;
                 continue;
             }
 
             // if next char is not an option, assume it's an argument.
             $remainingChars = substr($chars, $i + 1);
-            if ($defined->valueRequired()) {
-                $this->addAsOption($defined, $remainingChars);
+            if ($defined->valueRequired) {
+                $this->addOptionValue($defined, $remainingChars);
                 $this->parameterCursor++;
                 break;
             }
 
-            throw new ParseException("[option: -{$char} (--{$defined->getName()})] invalid value: \"{$remainingChars}\"", [
+            throw new ParseException("[option: -{$char} (--{$defined->name})] invalid value: \"{$remainingChars}\"", [
                 'option' => $defined,
                 'parameters' => $this->parameters,
                 'cursor' => $this->parameterCursor,
@@ -249,9 +253,9 @@ class ParameterParser
             ]);
         }
 
-        $this->addAsArgument($defined, $parameter);
+        $this->argumentValues[$defined->name][] = $parameter;
 
-        if (!$defined->isArray()) {
+        if (!$defined->allowMultiple) {
             $this->argumentCursor++;
         }
 
@@ -259,72 +263,75 @@ class ParameterParser
     }
 
     /**
-     * @return void
+     * @param array<string, Argument> $arguments
+     * @return array<string, Argument>
      */
-    protected function addRemainingArguments(): void
+    protected function appendRemainingArguments(array $arguments): array
     {
         $all = $this->definition->getArguments();
         $remaining = array_slice($all, $this->argumentCursor, null, true);
         foreach ($remaining as $name => $argument) {
-            if ($argument->isArray() && isset($this->parsedArguments[$name])) {
+            if ($argument->allowMultiple && isset($this->argumentValues[$name])) {
                 continue;
             }
 
-            if (!$argument->isOptional()) {
+            if (!$argument->optional) {
                 throw new ParseException("Missing required argument: {$name}", [
                     'parameters' => $this->parameters,
                     'argument' => $argument,
                 ]);
             }
 
-            $this->addAsDefaultArgument($argument);
+            $arguments[$name] = $this->makeDefaultArgument($argument);
         }
-    }
 
-    /**
-     * @return void
-     */
-    protected function addRemainingOptions(): void
-    {
-        $all = $this->definition->getLongOptions();
-        $remaining = array_diff_key($all, $this->parsedOptions);
-        foreach ($remaining as $defined) {
-            $this->addAsDefaultOption($defined);
-        }
+        return $arguments;
     }
 
     /**
      * @param string $name
-     * @return DefinedOption|null
+     * @return OptionDefinition
      */
-    protected function getDefinedLongOption(string $name): ?DefinedOption
+    protected function getDefinedLongOption(string $name): OptionDefinition
     {
-        return $this->definition->longOptionExists($name)
-            ? $this->checkOptionCount($this->definition->getLongOption($name))
-            : null;
+        if ($this->definition->longOptionExists($name)) {
+            return $this->checkOptionCount($this->definition->getLongOption($name));
+        }
+
+        throw new ParseException("Option: [--{$name}] is not defined.", [
+            'parameters' => $this->parameters,
+            'name' => $name,
+        ]);
     }
 
     /**
-     * @param string $name
-     * @return DefinedOption|null
+     * @param string $char
+     * @return OptionDefinition
      */
-    protected function getDefinedShortOption(string $name): ?DefinedOption
+    protected function getDefinedShortOption(string $char): OptionDefinition
     {
-        return $this->definition->shortOptionExists($name)
-            ? $this->checkOptionCount($this->definition->getShortOption($name))
-            : null;
+        if ($this->definition->shortOptionExists($char)) {
+            return $this->checkOptionCount($this->definition->getShortOption($char));
+        }
+
+        throw new ParseException("Option: [-{$char}] is not defined.", [
+            'parameters' => $this->parameters,
+            'cursor' => $this->parameterCursor,
+            'char' => $char,
+        ]);
     }
 
     /**
-     * @param DefinedOption $option
-     * @return DefinedOption
+     * @param OptionDefinition $option
+     * @return OptionDefinition
      */
-    protected function checkOptionCount(DefinedOption $option): DefinedOption
+    protected function checkOptionCount(OptionDefinition $option): OptionDefinition
     {
-        $longName = $option->getName();
+        $name = $option->name;
+        $values = $this->optionValues[$name] ?? [];
 
-        if (array_key_exists($longName, $this->parsedOptions) && !$option->isArray()) {
-            throw new ParseException("Option: {$longName} cannot be entered more than once", [
+        if (count($values) > 1 && !$option->allowMultiple) {
+            throw new ParseException("Option: [--{$name}] cannot be entered more than once", [
                 'option' => $option,
                 'parameters' => $this->parameters,
             ]);
@@ -334,75 +341,58 @@ class ParameterParser
     }
 
     /**
-     * @param DefinedArgument $argument
-     * @param string $value
-     * @return void
+     * @param ArgumentDefinition $defined
+     * @return Argument
      */
-    protected function addAsArgument(
-        DefinedArgument $argument,
-        string $value,
-    ): void
+    protected function makeDefaultArgument(ArgumentDefinition $defined): Argument
     {
-        $name = $argument->getName();
-        $this->parsedArguments[$name] ??= new Argument($argument, true);
-        $this->parsedArguments[$name]->addValue($value);
-    }
+        $name = $defined->name;
+        $default = $defined->default;
 
-    /**
-     * @param DefinedArgument $defined
-     * @return void
-     */
-    protected function addAsDefaultArgument(DefinedArgument $defined): void
-    {
-        $name = $defined->getName();
-        $this->parsedArguments[$name] = new Argument($defined, false);
-        $default = $defined->getDefault();
-        if ($defined->isArray()) {
+        if ($defined->allowMultiple) {
+            $default ??= [];
             if (!is_array($default)) {
                 throw new ParseException("Argument: {$name}'s default value must be an array, since it's a multi argument.", [
                     'argument' => $defined,
                     'default' => $default,
                 ]);
             }
-            foreach ($default as $value) {
-                $this->parsedArguments[$name]->addValue($value);
-            }
-        } else {
-            if (!is_string($default) && !is_null($default)) {
-                throw new ParseException("Argument: {$name}'s default value must be defined as string.", [
-                    'argument' => $defined,
-                    'default' => $default,
-                ]);
-            }
-            $this->parsedArguments[$name]->addValue($default);
         }
+        elseif (!is_string($default) && !is_null($default)) {
+            throw new ParseException("Argument: {$name}'s default value must be defined as string.", [
+                'argument' => $defined,
+                'default' => $default,
+            ]);
+        }
+
+        $values = !is_array($default) ? [$default] : $default;
+
+        return new Argument($defined, false, $values);
     }
 
     /**
-     * @param DefinedOption $defined
+     * @param OptionDefinition $defined
      * @param mixed $value
      * @return void
      */
-    protected function addAsOption(
-        DefinedOption $defined,
+    protected function addOptionValue(
+        OptionDefinition $defined,
         mixed $value
     ): void
     {
-        $name = $defined->getName();
-        $this->parsedOptions[$name] ??= new Option($defined, true);
-        $this->parsedOptions[$name]->addValue($value);
+        $this->optionValues[$defined->name][] = $value;
     }
 
     /**
-     * @param DefinedOption $defined
-     * @return void
+     * @param OptionDefinition $defined
+     * @return Option
      */
-    protected function addAsDefaultOption(DefinedOption $defined): void
+    protected function makeDefaultOption(OptionDefinition $defined): Option
     {
-        $name = $defined->getName();
-        $default = $defined->getDefault();
+        $name = $defined->name;
+        $default = $defined->default;
 
-        if ($defined->isArray()) {
+        if ($defined->allowMultiple) {
             $default ??= [];
             if (!is_array($default)) {
                 throw new ParseException("Option: --{$name}'s default value must be an array, since it's marked as multi.", [
@@ -420,6 +410,6 @@ class ParameterParser
 
         $values = !is_array($default) ? [$default] : $default;
 
-        $this->parsedOptions[$name] = new Option($defined, false, $values);
+        return new Option($defined, false, $values);
     }
 }

@@ -2,46 +2,30 @@
 
 namespace SouthPointe\Cli\Definitions;
 
-class DefinedOption extends DefinedParameter
+class OptionDefinition extends ParameterDefinition
 {
     /**
      * @param string $name
      * @param string|null $short
      * @param string $description
      * @param bool $valueRequired
-     * @param bool $multiple
+     * @param bool $allowMultiple
      * @param string|list<string>|null $default
      */
     public function __construct(
         string $name,
-        protected ?string $short = null,
+        public ?string $short = null,
         string $description = '',
-        protected bool $valueRequired = true,
-        bool $multiple = false,
+        public bool $valueRequired = true,
+        bool $allowMultiple = false,
         string|array|null $default = null,
     )
     {
         parent::__construct(
             $name,
             $description,
-            $multiple,
+            $allowMultiple,
             $default,
         );
-    }
-
-    /**
-     * @return string|null
-     */
-    public function getShortName(): ?string
-    {
-        return $this->short;
-    }
-
-    /**
-     * @return bool
-     */
-    public function valueRequired(): bool
-    {
-        return $this->valueRequired;
     }
 }

@@ -2,29 +2,29 @@
 
 namespace SouthPointe\Cli;
 
-use SouthPointe\Cli\Definitions\DefinedArgument;
-use SouthPointe\Cli\Definitions\DefinedOption;
+use SouthPointe\Cli\Definitions\ArgumentDefinition;
+use SouthPointe\Cli\Definitions\OptionDefinition;
 use function array_key_exists;
 use function array_values;
 
 class CommandDefinition
 {
     /**
-     * @var array<int, DefinedArgument>
+     * @var array<int, ArgumentDefinition>
      */
     protected array $argumentsByIndex;
 
     /**
-     * @var array<string, DefinedArgument>
+     * @var array<string, ArgumentDefinition>
      */
     protected array $argumentsByName;
 
     /**
      * @param string $name
      * @param string|null $description
-     * @param array<string, DefinedArgument> $arguments
-     * @param array<string, DefinedOption> $longOptions
-     * @param array<string, DefinedOption> $shortOptions
+     * @param array<string, ArgumentDefinition> $arguments
+     * @param array<string, OptionDefinition> $longOptions
+     * @param array<string, OptionDefinition> $shortOptions
      */
     public function __construct(
         protected string $name,
@@ -55,7 +55,7 @@ class CommandDefinition
     }
 
     /**
-     * @return array<string, DefinedArgument>
+     * @return array<string, ArgumentDefinition>
      */
     public function getArguments(): array
     {
@@ -64,24 +64,24 @@ class CommandDefinition
 
     /**
      * @param int $index
-     * @return DefinedArgument|null
+     * @return ArgumentDefinition|null
      */
-    public function getArgumentByIndexOrNull(int $index): ?DefinedArgument
+    public function getArgumentByIndexOrNull(int $index): ?ArgumentDefinition
     {
         return $this->argumentsByIndex[$index] ?? null;
     }
 
     /**
      * @param string $name
-     * @return DefinedArgument
+     * @return ArgumentDefinition
      */
-    public function getArgumentByName(string $name): DefinedArgument
+    public function getArgumentByName(string $name): ArgumentDefinition
     {
         return $this->argumentsByName[$name];
     }
 
     /**
-     * @return array<string, DefinedOption>
+     * @return array<string, OptionDefinition>
      */
     public function getLongOptions(): array
     {
@@ -99,9 +99,9 @@ class CommandDefinition
 
     /**
      * @param string $name
-     * @return DefinedOption
+     * @return OptionDefinition
      */
-    public function getLongOption(string $name): DefinedOption
+    public function getLongOption(string $name): OptionDefinition
     {
         return $this->longOptions[$name];
     }
@@ -117,9 +117,9 @@ class CommandDefinition
 
     /**
      * @param string $name
-     * @return DefinedOption
+     * @return OptionDefinition
      */
-    public function getShortOption(string $name): DefinedOption
+    public function getShortOption(string $name): OptionDefinition
     {
         return $this->shortOptions[$name];
     }
