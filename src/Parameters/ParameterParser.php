@@ -160,7 +160,7 @@ class ParameterParser
             ]);
         }
 
-        $this->addAsOption($defined, $name, $value);
+        $this->addAsOption($defined, $value);
 
         $this->parameterCursor++;
     }
@@ -191,7 +191,7 @@ class ParameterParser
             if ($nextChar === false) {
                 $nextParameter = $this->nextParameterOrNull();
                 if ($nextParameter !== null && $this->isNotAnOption($nextParameter)) {
-                    $this->addAsOption($defined, $char, $nextParameter);
+                    $this->addAsOption($defined, $nextParameter);
                     $this->parameterCursor+= 2;
                     break;
                 }
@@ -205,14 +205,14 @@ class ParameterParser
                     ]);
                 }
 
-                $this->addAsOption($defined, $char, $default);
+                $this->addAsOption($defined, $default);
                 $this->parameterCursor++;
                 break;
             }
 
             // if next char is another option, add the current option and move on.
             if ($this->definition->shortOptionExists($nextChar)) {
-                $this->addAsOption($defined, $char, $defined->getDefault());
+                $this->addAsOption($defined, $defined->getDefault());
                 $this->parameterCursor++;
                 continue;
             }
@@ -220,7 +220,7 @@ class ParameterParser
             // if next char is not an option, assume it's an argument.
             $remainingChars = substr($chars, $i + 1);
             if ($defined->valueRequired()) {
-                $this->addAsOption($defined, $char, $remainingChars);
+                $this->addAsOption($defined, $remainingChars);
                 $this->parameterCursor++;
                 break;
             }
@@ -380,18 +380,16 @@ class ParameterParser
 
     /**
      * @param DefinedOption $defined
-     * @param string|null $enteredName
      * @param mixed $value
      * @return void
      */
     protected function addAsOption(
         DefinedOption $defined,
-        ?string $enteredName,
         mixed $value
     ): void
     {
         $name = $defined->getName();
-        $this->parsedOptions[$name] ??= new Option($defined, $enteredName);
+        $this->parsedOptions[$name] ??= new Option($defined, true);
         $this->parsedOptions[$name]->addValue($value);
     }
 
@@ -422,6 +420,6 @@ class ParameterParser
 
         $values = !is_array($default) ? [$default] : $default;
 
-        $this->parsedOptions[$name] = new Option($defined, null, $values);
+        $this->parsedOptions[$name] = new Option($defined, false, $values);
     }
 }

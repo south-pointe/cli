@@ -236,7 +236,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertTrue($option->wasEntered());
-        self::assertSame('all', $option->getEnteredNameOrNull());
         self::assertSame([null], $option->getValues());
     }
 
@@ -250,7 +249,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertTrue($option->wasEntered());
-        self::assertSame('all', $option->getEnteredNameOrNull());
         self::assertSame(['d'], $option->getValues());
     }
 
@@ -273,7 +271,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertTrue($option->wasEntered());
-        self::assertSame('all', $option->getEnteredNameOrNull());
         self::assertSame(['text'], $option->getValues());
     }
 
@@ -287,7 +284,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertTrue($option->wasEntered());
-        self::assertSame('all', $option->getEnteredNameOrNull());
         self::assertSame(['text'], $option->getValues());
     }
 
@@ -301,7 +297,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertTrue($option->wasEntered());
-        self::assertSame('all', $option->getEnteredNameOrNull());
         self::assertSame(['1', '2'], $option->getValues());
     }
 
@@ -315,7 +310,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertFalse($option->wasEntered());
-        self::assertSame(null, $option->getEnteredNameOrNull());
         self::assertSame([], $option->getValues());
     }
 
@@ -329,7 +323,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertFalse($option->wasEntered());
-        self::assertSame(null, $option->getEnteredNameOrNull());
         self::assertSame(['3'], $option->getValues());
     }
 
@@ -343,7 +336,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertTrue($option->wasEntered());
-        self::assertSame('all', $option->getEnteredNameOrNull());
         self::assertSame(['1'], $option->getValues());
     }
 
@@ -359,8 +351,6 @@ class CommandBuilderTest extends TestCase
         $optionAll = $parsed['options']['all'];
         $optionBee = $parsed['options']['bee'];
         self::assertTrue($optionAll->wasEntered());
-        self::assertSame('all', $optionAll->getEnteredNameOrNull());
-        self::assertSame('bee', $optionBee->getEnteredNameOrNull());
         self::assertSame(['1', '2'], $optionAll->getValues());
         self::assertSame([null], $optionBee->getValues());
     }
@@ -383,7 +373,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertTrue($option->wasEntered());
-        self::assertSame('a', $option->getEnteredNameOrNull());
         self::assertSame([null], $option->getValues());
     }
 
@@ -397,7 +386,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertTrue($option->wasEntered());
-        self::assertSame('a', $option->getEnteredNameOrNull());
         self::assertSame(['text'], $option->getValues());
     }
 
@@ -420,7 +408,6 @@ class CommandBuilderTest extends TestCase
 
         $option = $parsed['options']['all'];
         self::assertTrue($option->wasEntered());
-        self::assertSame('a',$option->getEnteredNameOrNull());
         self::assertSame(['d'],$option->getValues());
     }
 
@@ -446,8 +433,6 @@ class CommandBuilderTest extends TestCase
         $optionBee = $parsed['options']['bee'];
         self::assertTrue($optionAll->wasEntered());
         self::assertTrue($optionBee->wasEntered());
-        self::assertSame('a', $optionAll->getEnteredNameOrNull());
-        self::assertSame('b', $optionBee->getEnteredNameOrNull());
         self::assertSame([null], $optionAll->getValues());
         self::assertSame([null], $optionBee->getValues());
     }
@@ -465,8 +450,6 @@ class CommandBuilderTest extends TestCase
         $optionBee = $parsed['options']['bee'];
         self::assertTrue($optionAll->wasEntered());
         self::assertTrue($optionBee->wasEntered());
-        self::assertSame('a', $optionAll->getEnteredNameOrNull());
-        self::assertSame('b', $optionBee->getEnteredNameOrNull());
         self::assertSame(['1'], $optionAll->getValues());
         self::assertSame(['2'], $optionBee->getValues());
     }
@@ -484,8 +467,6 @@ class CommandBuilderTest extends TestCase
         $optionBee = $parsed['options']['bee'];
         self::assertTrue($optionAll->wasEntered());
         self::assertTrue($optionBee->wasEntered());
-        self::assertSame('a',$optionAll->getEnteredNameOrNull());
-        self::assertSame('b', $optionBee->getEnteredNameOrNull());
         self::assertSame(['1'],$optionAll->getValues());
         self::assertSame(['2'], $optionBee->getValues());
     }
