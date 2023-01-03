@@ -15,16 +15,13 @@ use function sprintf;
 abstract class Parameter
 {
     /**
-     * @var list<string|null>|null
-     */
-    protected ?array $values = null;
-
-    /**
      * @param TDefined $defined
+     * @param list<string|null>|null $values
      */
     public function __construct(
         protected readonly DefinedParameter $defined,
         protected readonly bool $wasEntered,
+        protected ?array $values = null,
     )
     {
     }

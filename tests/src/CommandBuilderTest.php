@@ -56,7 +56,7 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parameters->arguments);
         self::assertCount(0, $parameters->options);
 
-        self::assertTrue($parameters->argumentEntered('a'));
+        self::assertTrue($parameters->getArgument('a')->wasEntered());
         self::assertSame(['1'], $parameters->getArgument('a')->getValues());
     }
 
@@ -84,7 +84,7 @@ class CommandBuilderTest extends TestCase
         $parameters = $this->parseBuilder($builder, []);
 
         self::assertCount(1, $parameters->arguments);
-        self::assertFalse($parameters->argumentEntered('a'));
+        self::assertFalse($parameters->getArgument('a')->wasEntered());
     }
 
     public function test_argument_as_optional_with_default_fallback(): void
@@ -94,7 +94,7 @@ class CommandBuilderTest extends TestCase
         $parameters = $this->parseBuilder($builder, []);
 
         self::assertCount(1, $parameters->arguments);
-        self::assertFalse($parameters->argumentEntered('a'));
+        self::assertFalse($parameters->getArgument('a')->wasEntered());
         self::assertSame(['1'], $parameters->getArgument('a')->getValues());
     }
 
@@ -105,7 +105,7 @@ class CommandBuilderTest extends TestCase
         $parameters = $this->parseBuilder($builder, ['x']);
 
         self::assertCount(1, $parameters->arguments);
-        self::assertTrue($parameters->argumentEntered('a'));
+        self::assertTrue($parameters->getArgument('a')->wasEntered());
         self::assertSame(['x'], $parameters->getArgument('a')->getValues());
     }
 
@@ -117,8 +117,8 @@ class CommandBuilderTest extends TestCase
         $parameters = $this->parseBuilder($builder, ['x', 'y']);
 
         self::assertCount(2, $parameters->arguments);
-        self::assertTrue($parameters->argumentEntered('a'));
-        self::assertTrue($parameters->argumentEntered('b'));
+        self::assertTrue($parameters->getArgument('a')->wasEntered());
+        self::assertTrue($parameters->getArgument('b')->wasEntered());
         self::assertSame(['x'], $parameters->getArgument('a')->getValues());
         self::assertSame(['y'], $parameters->getArgument('b')->getValues());
     }
@@ -141,8 +141,8 @@ class CommandBuilderTest extends TestCase
         $parameters = $this->parseBuilder($builder, []);
 
         self::assertCount(2, $parameters->arguments);
-        self::assertFalse($parameters->argumentEntered('a'));
-        self::assertFalse($parameters->argumentEntered('b'));
+        self::assertFalse($parameters->getArgument('a')->wasEntered());
+        self::assertFalse($parameters->getArgument('b')->wasEntered());
         self::assertSame(['1'], $parameters->getArgument('a')->getValues());
         self::assertSame(['2'], $parameters->getArgument('b')->getValues());
     }
@@ -269,6 +269,17 @@ class CommandBuilderTest extends TestCase
         self::assertTrue($parameters->getOption('all')->wasEntered());
         self::assertSame('all', $parameters->getOption('all')->getEnteredNameOrNull());
         self::assertSame(['1', '2'], $parameters->getOption('all')->getValues());
+    }
+
+    public function test_option__long__multiple__no_input(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->option('all')->allowMultiple();
+        $parameters = $this->parseBuilder($builder, []);
+        self::assertCount(1, $parameters->options);
+        self::assertFalse($parameters->getOption('all')->wasEntered());
+        self::assertSame(null, $parameters->getOption('all')->getEnteredNameOrNull());
+        self::assertSame([], $parameters->getOption('all')->getValues());
     }
 
     public function test_option__long__multiple__default(): void

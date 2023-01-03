@@ -6,8 +6,8 @@ use SouthPointe\Cli\CommandDefinition;
 use SouthPointe\Cli\Definitions\DefinedArgument;
 use SouthPointe\Cli\Definitions\DefinedOption;
 use SouthPointe\Cli\Exceptions\ParseException;
+use function array_diff_key;
 use function array_key_exists;
-use function array_keys;
 use function array_slice;
 use function count;
 use function explode;
@@ -286,14 +286,10 @@ class ParameterParser
      */
     protected function addRemainingOptions(): void
     {
-        $remaining = $this->definition->getLongOptions();
-        foreach (array_keys($this->parsedOptions) as $name) {
-            unset($remaining[$name]);
-        }
+        $all = $this->definition->getLongOptions();
+        $remaining = array_diff_key($all, $this->parsedOptions);
         foreach ($remaining as $defined) {
-            if ($defined->hasDefault()) {
-                $this->addAsDefaultOption($defined);
-            }
+            $this->addAsDefaultOption($defined);
         }
     }
 
@@ -406,26 +402,26 @@ class ParameterParser
     protected function addAsDefaultOption(DefinedOption $defined): void
     {
         $name = $defined->getName();
-        $this->parsedOptions[$name] ??= new Option($defined, null);
         $default = $defined->getDefault();
+
         if ($defined->isArray()) {
+            $default ??= [];
             if (!is_array($default)) {
                 throw new ParseException("Option: --{$name}'s default value must be an array, since it's marked as multi.", [
                     'option' => $defined,
                     'default' => $default,
                 ]);
             }
-            foreach ($default as $value) {
-                $this->parsedOptions[$name]->addValue($value);
-            }
-        } else {
-            if (!is_string($default) && !is_null($default)) {
-                throw new ParseException("Option: --{$name}'s default value must be defined as string.", [
-                    'option' => $defined,
-                    'default' => $default,
-                ]);
-            }
-            $this->parsedOptions[$name]->addValue($default);
         }
+        elseif (!is_string($default) && !is_null($default)) {
+            throw new ParseException("Option: --{$name}'s default value must be defined as string.", [
+                'option' => $defined,
+                'default' => $default,
+            ]);
+        }
+
+        $values = !is_array($default) ? [$default] : $default;
+
+        $this->parsedOptions[$name] = new Option($defined, null, $values);
     }
 }

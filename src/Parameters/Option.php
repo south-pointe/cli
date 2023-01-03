@@ -16,9 +16,14 @@ class Option extends Parameter
     public function __construct(
         DefinedOption $defined,
         protected readonly ?string $enteredName = null,
+        ?array $values = null,
     )
     {
-        parent::__construct($defined, $this->enteredName !== null);
+        parent::__construct(
+            $defined,
+            $this->enteredName !== null,
+            $values,
+        );
     }
 
     /**

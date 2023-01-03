@@ -4,7 +4,6 @@ namespace SouthPointe\Cli;
 
 use SouthPointe\Cli\Parameters\Argument;
 use SouthPointe\Cli\Parameters\Option;
-use function array_key_exists;
 
 class Parameters
 {
@@ -21,29 +20,11 @@ class Parameters
 
     /**
      * @param string $name
-     * @return bool
-     */
-    public function argumentEntered(string $name): bool
-    {
-        return $this->arguments[$name]->wasEntered();
-    }
-
-    /**
-     * @param string $name
      * @return Argument
      */
     public function getArgument(string $name): Argument
     {
         return $this->arguments[$name];
-    }
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    public function hasOption(string $name): bool
-    {
-        return array_key_exists($name, $this->options);
     }
 
     /**
