@@ -40,7 +40,7 @@ class OptionBuilder extends ParameterBuilder
      * @param string|list<string>|null $default
      * @return $this
      */
-    public function requireValue(string|array|null $default = null): static
+    public function requiresValue(string|array|null $default = null): static
     {
         $this->valueRequired = true;
         $this->default = $default;

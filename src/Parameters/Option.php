@@ -24,7 +24,7 @@ class Option extends Parameter
     /**
      * @return string|null
      */
-    public function getEnteredName(): ?string
+    public function getEnteredNameOrNull(): ?string
     {
         return $this->enteredName;
     }

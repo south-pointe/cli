@@ -21,6 +21,7 @@ class CommandDefinition
 
     /**
      * @param string $name
+     * @param string|null $description
      * @param array<string, DefinedArgument> $arguments
      * @param array<string, DefinedOption> $longOptions
      * @param array<string, DefinedOption> $shortOptions
@@ -65,7 +66,7 @@ class CommandDefinition
      * @param int $index
      * @return DefinedArgument|null
      */
-    public function getArgumentByIndex(int $index): ?DefinedArgument
+    public function getArgumentByIndexOrNull(int $index): ?DefinedArgument
     {
         return $this->argumentsByIndex[$index] ?? null;
     }
@@ -77,6 +78,14 @@ class CommandDefinition
     public function getArgumentByName(string $name): DefinedArgument
     {
         return $this->argumentsByName[$name];
+    }
+
+    /**
+     * @return array<string, DefinedOption>
+     */
+    public function getLongOptions(): array
+    {
+        return $this->longOptions;
     }
 
     /**
