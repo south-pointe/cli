@@ -5,13 +5,15 @@ namespace SouthPointe\Cli\Parameters;
 use SouthPointe\Cli\CommandDefinition;
 use SouthPointe\Cli\Definitions\ArgumentDefinition;
 use SouthPointe\Cli\Definitions\OptionDefinition;
+use SouthPointe\Cli\Definitions\ParameterDefinition;
 use SouthPointe\Cli\Exceptions\ParseException;
 use function array_diff_key;
+use function array_is_list;
 use function array_slice;
 use function count;
 use function explode;
+use function gettype;
 use function is_array;
-use function is_null;
 use function is_string;
 use function preg_match;
 use function str_starts_with;
@@ -29,11 +31,6 @@ class ParameterParser
      * @var int
      */
     protected int $argumentCursor = 0;
-
-    /**
-     * @var array<string, Argument>
-     */
-    protected array $parsedArguments = [];
 
     /**
      * @var array<string, list<mixed>>
@@ -121,7 +118,7 @@ class ParameterParser
      */
     protected function isLongOption(string $parameter): bool
     {
-        return (bool)preg_match('/--\w+/', $parameter);
+        return (bool) preg_match('/--\w+/', $parameter);
     }
 
     /**
@@ -130,7 +127,7 @@ class ParameterParser
      */
     protected function isShortOption(string $parameter): bool
     {
-        return (bool)preg_match('/-\w+/', $parameter);
+        return (bool) preg_match('/-\w+/', $parameter);
     }
 
     /**
@@ -196,7 +193,7 @@ class ParameterParser
                 $nextParameter = $this->nextParameterOrNull();
                 if ($nextParameter !== null && $this->isNotAnOption($nextParameter)) {
                     $this->addOptionValue($defined, $nextParameter);
-                    $this->parameterCursor+= 2;
+                    $this->parameterCursor += 2;
                     break;
                 }
 
@@ -346,28 +343,7 @@ class ParameterParser
      */
     protected function makeDefaultArgument(ArgumentDefinition $defined): Argument
     {
-        $name = $defined->name;
-        $default = $defined->default;
-
-        if ($defined->allowMultiple) {
-            $default ??= [];
-            if (!is_array($default)) {
-                throw new ParseException("Argument: {$name}'s default value must be an array, since it's a multi argument.", [
-                    'argument' => $defined,
-                    'default' => $default,
-                ]);
-            }
-        }
-        elseif (!is_string($default) && !is_null($default)) {
-            throw new ParseException("Argument: {$name}'s default value must be defined as string.", [
-                'argument' => $defined,
-                'default' => $default,
-            ]);
-        }
-
-        $values = !is_array($default) ? [$default] : $default;
-
-        return new Argument($defined, false, $values);
+        return new Argument($defined, false, $this->getDefaultValue($defined));
     }
 
     /**
@@ -389,27 +365,59 @@ class ParameterParser
      */
     protected function makeDefaultOption(OptionDefinition $defined): Option
     {
-        $name = $defined->name;
+        return new Option($defined, false, $this->getDefaultValue($defined));
+    }
+
+    /**
+     * @param ParameterDefinition $defined
+     * @return list<string>
+     */
+    protected function getDefaultValue(ParameterDefinition $defined): array
+    {
         $default = $defined->default;
 
         if ($defined->allowMultiple) {
             $default ??= [];
+
             if (!is_array($default)) {
-                throw new ParseException("Option: --{$name}'s default value must be an array, since it's marked as multi.", [
-                    'option' => $defined,
-                    'default' => $default,
-                ]);
+                $this->throwParseException($defined, 'Default values must be list<string>, since it allows multiple values.');
             }
-        }
-        elseif (!is_string($default) && !is_null($default)) {
-            throw new ParseException("Option: --{$name}'s default value must be defined as string.", [
-                'option' => $defined,
-                'default' => $default,
-            ]);
+
+            if (!array_is_list($default)) {
+                $this->throwParseException($defined, 'Default values must be list<string>, map given.');
+            }
+
+            foreach ($default as $value) {
+                if (!is_string($value)) {
+                    $type = gettype($value);
+                    $this->throwParseException($defined, "Default values must consist of strings, {$type} given.");
+                }
+            }
+            return $default;
         }
 
-        $values = !is_array($default) ? [$default] : $default;
+        $default ??= '';
+        if (!is_string($default)) {
+            $type = gettype($default);
+            $this->throwParseException($defined, "Default value must be defined as string, {$type} given.");
+        }
+        return [$default];
+    }
 
-        return new Option($defined, false, $values);
+    /**
+     * @param ParameterDefinition $defined
+     * @param string $message
+     * @param array<string, mixed> $context
+     * @return never
+     */
+    protected function throwParseException(ParameterDefinition $defined, string $message, array $context = []): never
+    {
+        $type = ($defined instanceof ArgumentDefinition)
+            ? "Option: [--{$defined->name}]"
+            : "Argument: [{$defined->name}]";
+
+        throw new ParseException("{$type} {$message}", $context + [
+            'defined' => $defined,
+        ]);
     }
 }

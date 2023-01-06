@@ -2,9 +2,10 @@
 
 namespace SouthPointe\Cli;
 
-use RuntimeException;
 use SouthPointe\Cli\Definitions\ArgumentBuilder;
 use SouthPointe\Cli\Definitions\OptionBuilder;
+use SouthPointe\Core\Exceptions\LogicException;
+use function array_key_exists;
 use function array_map;
 
 class CommandBuilder
@@ -56,6 +57,12 @@ class CommandBuilder
      */
     public function argument(string $name): ArgumentBuilder
     {
+        if (array_key_exists($name, $this->argumentBuilders)) {
+            throw new LogicException("Argument [{$name}] already exists.", [
+                'name' => $name,
+                'argument' => $this->argumentBuilders[$name],
+            ]);
+        }
         return $this->argumentBuilders[$name] = new ArgumentBuilder($name);
     }
 
@@ -67,17 +74,32 @@ class CommandBuilder
     public function option(string $name, ?string $short = null): OptionBuilder
     {
         $builder = new OptionBuilder($name, $short);
+
+        if (array_key_exists($name, $this->longOptionBuilders)) {
+            throw new LogicException("Option [--{$name}] already exists.", [
+                'name' => $name,
+                'option' => $this->longOptionBuilders[$name],
+            ]);
+        }
         $this->longOptionBuilders[$name] = $builder;
+
         if ($short !== null) {
+            if (array_key_exists($short, $this->shortOptionBuilders)) {
+                throw new LogicException("Option [-{$short}] already exists.", [
+                    'name' => $name,
+                    'option' => $this->shortOptionBuilders[$short],
+                ]);
+            }
             $this->shortOptionBuilders[$short] = $builder;
         }
+
         return $builder;
     }
 
     public function build(): CommandDefinition
     {
         if ($this->name === null) {
-            throw new RuntimeException('Name of command must be defined!');
+            throw new LogicException('Name of command must be defined!');
         }
 
         $arguments = array_map(

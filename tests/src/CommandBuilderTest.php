@@ -7,6 +7,7 @@ use SouthPointe\Cli\Exceptions\ParseException;
 use SouthPointe\Cli\Parameters\Argument;
 use SouthPointe\Cli\Parameters\Option;
 use SouthPointe\Cli\Parameters\ParameterParser;
+use SouthPointe\Core\Exceptions\LogicException;
 
 class CommandBuilderTest extends TestCase
 {
@@ -79,6 +80,36 @@ class CommandBuilderTest extends TestCase
         $builder->argument('a');
         $builder->argument('b');
         $this->parse($builder, ['1', '2', '3']);
+    }
+
+    public function test_argument__name_collision(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Argument [a] already exists.');
+        $builder = $this->makeBuilder();
+        $builder->name('t');
+        $builder->argument('a');
+        $builder->argument('a');
+    }
+
+    public function test_long_option__name_collision(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Option [--a] already exists.');
+        $builder = $this->makeBuilder();
+        $builder->name('t');
+        $builder->option('a');
+        $builder->option('a');
+    }
+
+    public function test_short_option__name_collision(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Option [-a] already exists.');
+        $builder = $this->makeBuilder();
+        $builder->name('t');
+        $builder->option('one', 'a');
+        $builder->option('two', 'a');
     }
 
     public function test_argument_as_optional(): void

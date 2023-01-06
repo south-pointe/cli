@@ -13,12 +13,12 @@ abstract class Parameter
 {
     /**
      * @param TDefined $defined
-     * @param list<string|null>|null $values
+     * @param list<string> $values
      */
     public function __construct(
         protected readonly ParameterDefinition $defined,
         protected readonly bool $wasEntered,
-        protected readonly ?array $values = null,
+        protected readonly array $values = [],
     )
     {
     }
@@ -41,7 +41,7 @@ abstract class Parameter
 
     /**
      * @param int $at
-     * @return string|null
+     * @return string
      */
     public function getValue(int $at = 0): ?string
     {
@@ -58,7 +58,7 @@ abstract class Parameter
     }
 
     /**
-     * @return list<string|null>
+     * @return list<string>
      */
     public function getValues(): array
     {
