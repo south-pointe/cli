@@ -92,26 +92,6 @@ class CommandBuilderTest extends TestCase
         $builder->argument('a');
     }
 
-    public function test_long_option__name_collision(): void
-    {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Option [--a] already exists.');
-        $builder = $this->makeBuilder();
-        $builder->name('t');
-        $builder->option('a');
-        $builder->option('a');
-    }
-
-    public function test_short_option__name_collision(): void
-    {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Option [-a] already exists.');
-        $builder = $this->makeBuilder();
-        $builder->name('t');
-        $builder->option('one', 'a');
-        $builder->option('two', 'a');
-    }
-
     public function test_argument_as_optional(): void
     {
         $builder = $this->makeBuilder();
@@ -247,6 +227,26 @@ class CommandBuilderTest extends TestCase
         $argument_b = $parsed['arguments']['b'];
         self::assertSame(['1', '2', '3'], $argument_a->getValues());
         self::assertSame(['4'], $argument_b->getValues());
+    }
+
+    public function test_option__long__name_collision(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Option [--a] already exists.');
+        $builder = $this->makeBuilder();
+        $builder->name('t');
+        $builder->option('a');
+        $builder->option('a');
+    }
+
+    public function test_option__short__name_collision(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Option [-a] already exists.');
+        $builder = $this->makeBuilder();
+        $builder->name('t');
+        $builder->option('one', 'a');
+        $builder->option('two', 'a');
     }
 
     public function test_option__long__undefined(): void
