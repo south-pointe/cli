@@ -239,16 +239,6 @@ class CommandBuilderTest extends TestCase
         $builder->option('a');
     }
 
-    public function test_option__short__name_collision(): void
-    {
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Option [-a] already exists.');
-        $builder = $this->makeBuilder();
-        $builder->name('t');
-        $builder->option('one', 'a');
-        $builder->option('two', 'a');
-    }
-
     public function test_option__long__undefined(): void
     {
         $this->expectException(ParseException::class);
@@ -384,6 +374,16 @@ class CommandBuilderTest extends TestCase
         self::assertTrue($optionAll->wasEntered());
         self::assertSame(['1', '2'], $optionAll->getValues());
         self::assertSame([null], $optionBee->getValues());
+    }
+
+    public function test_option__short__name_collision(): void
+    {
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('Option [-a] already exists.');
+        $builder = $this->makeBuilder();
+        $builder->name('t');
+        $builder->option('one', 'a');
+        $builder->option('two', 'a');
     }
 
     public function test_option__short__undefined(): void
