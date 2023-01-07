@@ -15,6 +15,7 @@ use function explode;
 use function gettype;
 use function is_array;
 use function is_string;
+use function ltrim;
 use function preg_match;
 use function str_starts_with;
 use function strlen;
@@ -145,7 +146,7 @@ class ParameterParser
      */
     protected function processLongOption(string $parameter): void
     {
-        $parts = explode('=', substr($parameter, 2));
+        $parts = explode('=', ltrim($parameter, '-'));
         $name = $parts[0];
         $value = $parts[1] ?? null;
 
@@ -180,11 +181,11 @@ class ParameterParser
      */
     protected function processShortOptions(string $parameter): void
     {
-        $chars = substr($parameter, 1);
+        $chars = ltrim($parameter, '-');
 
         for ($i = 0, $size = strlen($chars); $i < $size; $i++) {
             $char = $chars[$i];
-            $defined = $this->getDefinedShortOption($char);
+            $defined = $this->getDefinedOptionByShortName($char);
 
             $nextChar = $chars[$i + 1] ?? false;
 
@@ -305,7 +306,7 @@ class ParameterParser
      * @param string $char
      * @return OptionDefinition
      */
-    protected function getDefinedShortOption(string $char): OptionDefinition
+    protected function getDefinedOptionByShortName(string $char): OptionDefinition
     {
         if ($this->definition->shortOptionExists($char)) {
             return $this->checkOptionCount($this->definition->getShortOption($char));
