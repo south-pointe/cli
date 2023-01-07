@@ -75,7 +75,7 @@ class ParameterParser
 
         $arguments = [];
         foreach ($this->argumentValues as $name => $values) {
-            $defined = $this->definition->getArgumentByName($name);
+            $defined = $this->definition->getArgument($name);
             $arguments[$name] = new Argument($defined, true, $values);
         }
         $arguments = $this->appendRemainingArguments($arguments);
@@ -119,7 +119,7 @@ class ParameterParser
      */
     protected function isLongOption(string $parameter): bool
     {
-        return (bool) preg_match('/--\w+/', $parameter);
+        return (bool) preg_match('/^--\w+/', $parameter);
     }
 
     /**
@@ -128,7 +128,7 @@ class ParameterParser
      */
     protected function isShortOption(string $parameter): bool
     {
-        return (bool) preg_match('/-\w+/', $parameter);
+        return (bool) preg_match('/^-\w+/', $parameter);
     }
 
     /**
@@ -292,14 +292,16 @@ class ParameterParser
      */
     protected function getDefinedOption(string $name): OptionDefinition
     {
-        if ($this->definition->optionExists($name)) {
-            return $this->checkOptionCount($this->definition->getOption($name));
+        $defined = $this->definition->getOptionOrNull($name);
+
+        if ($defined === null) {
+            throw new ParseException("Option: [--{$name}] is not defined.", [
+                'parameters' => $this->parameters,
+                'name' => $name,
+            ]);
         }
 
-        throw new ParseException("Option: [--{$name}] is not defined.", [
-            'parameters' => $this->parameters,
-            'name' => $name,
-        ]);
+        return $this->checkOptionCount($defined);
     }
 
     /**
@@ -308,15 +310,17 @@ class ParameterParser
      */
     protected function getDefinedOptionByShortName(string $char): OptionDefinition
     {
-        if ($this->definition->shortOptionExists($char)) {
-            return $this->checkOptionCount($this->definition->getShortOption($char));
+        $defined = $this->definition->getOptionByShortOrNull($char);
+
+        if ($defined === null) {
+            throw new ParseException("Option: [-{$char}] is not defined.", [
+                'parameters' => $this->parameters,
+                'cursor' => $this->parameterCursor,
+                'char' => $char,
+            ]);
         }
 
-        throw new ParseException("Option: [-{$char}] is not defined.", [
-            'parameters' => $this->parameters,
-            'cursor' => $this->parameterCursor,
-            'char' => $char,
-        ]);
+        return $this->checkOptionCount($defined);
     }
 
     /**

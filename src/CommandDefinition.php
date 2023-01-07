@@ -5,37 +5,31 @@ namespace SouthPointe\Cli;
 use SouthPointe\Cli\Definitions\ArgumentDefinition;
 use SouthPointe\Cli\Definitions\OptionDefinition;
 use function array_key_exists;
-use function array_values;
+use function array_keys;
 
 class CommandDefinition
 {
     /**
-     * @var array<int, ArgumentDefinition>
+     * @var list<string>
      */
-    protected array $argumentsByIndex;
-
-    /**
-     * @var array<string, ArgumentDefinition>
-     */
-    protected array $argumentsByName;
+    protected array $argumentIndexAliases;
 
     /**
      * @param string $name
-     * @param string|null $description
+     * @param string $description
      * @param array<string, ArgumentDefinition> $arguments
      * @param array<string, OptionDefinition> $options
      * @param array<string, string> $shortNameAliases
      */
     public function __construct(
         protected string $name,
-        protected ?string $description,
-        array $arguments,
+        protected string $description,
+        protected array $arguments,
         protected array $options,
         protected array $shortNameAliases,
     )
     {
-        $this->argumentsByIndex = array_values($arguments);
-        $this->argumentsByName = $arguments;
+        $this->argumentIndexAliases = array_keys($arguments);
     }
 
     /**
@@ -47,9 +41,9 @@ class CommandDefinition
     }
 
     /**
-     * @return string|null
+     * @return string
      */
-    public function getDescription(): ?string
+    public function getDescription(): string
     {
         return $this->description;
     }
@@ -59,7 +53,7 @@ class CommandDefinition
      */
     public function getArguments(): array
     {
-        return $this->argumentsByName;
+        return $this->arguments;
     }
 
     /**
@@ -68,16 +62,18 @@ class CommandDefinition
      */
     public function getArgumentByIndexOrNull(int $index): ?ArgumentDefinition
     {
-        return $this->argumentsByIndex[$index] ?? null;
+        return array_key_exists($index, $this->argumentIndexAliases)
+            ? $this->getArgument($this->argumentIndexAliases[$index])
+            : null;
     }
 
     /**
      * @param string $name
      * @return ArgumentDefinition
      */
-    public function getArgumentByName(string $name): ArgumentDefinition
+    public function getArgument(string $name): ArgumentDefinition
     {
-        return $this->argumentsByName[$name];
+        return $this->arguments[$name];
     }
 
     /**
@@ -90,20 +86,11 @@ class CommandDefinition
 
     /**
      * @param string $name
-     * @return bool
+     * @return OptionDefinition|null
      */
-    public function optionExists(string $name): bool
+    public function getOptionOrNull(string $name): ?OptionDefinition
     {
-        return array_key_exists($name, $this->options);
-    }
-
-    /**
-     * @param string $name
-     * @return OptionDefinition
-     */
-    public function getOption(string $name): OptionDefinition
-    {
-        return $this->options[$name];
+        return $this->options[$name] ?? null;
     }
 
     /**
@@ -117,10 +104,12 @@ class CommandDefinition
 
     /**
      * @param string $char
-     * @return OptionDefinition
+     * @return OptionDefinition|null
      */
-    public function getShortOption(string $char): OptionDefinition
+    public function getOptionByShortOrNull(string $char): ?OptionDefinition
     {
-        return $this->getOption($this->shortNameAliases[$char]);
+        return $this->shortOptionExists($char)
+            ? $this->getOptionOrNull($this->shortNameAliases[$char])
+            : null;
     }
 }

@@ -16,9 +16,9 @@ class CommandBuilder
     protected ?string $name = null;
 
     /**
-     * @var string|null
+     * @var string
      */
-    protected ?string $description = null;
+    protected string $description = '';
 
     /**
      * @var array<string, ArgumentBuilder>
