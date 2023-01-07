@@ -81,10 +81,10 @@ class ParameterParser
 
         $options = [];
         foreach ($this->optionValues as $name => $values) {
-            $defined = $this->getDefinedLongOption($name);
+            $defined = $this->getDefinedOption($name);
             $options[$name] = new Option($defined, true, $values);
         }
-        $all = $this->definition->getLongOptions();
+        $all = $this->definition->getOptions();
         $remaining = array_diff_key($all, $options);
         foreach ($remaining as $name => $defined) {
             $options[$name] = $this->makeDefaultOption($defined);
@@ -149,7 +149,7 @@ class ParameterParser
         $name = $parts[0];
         $value = $parts[1] ?? null;
 
-        $defined = $this->getDefinedLongOption($name);
+        $defined = $this->getDefinedOption($name);
 
         if ($value === null && $this->hasMoreParameters()) {
             // look at the next parameter to check if it's a value
@@ -289,10 +289,10 @@ class ParameterParser
      * @param string $name
      * @return OptionDefinition
      */
-    protected function getDefinedLongOption(string $name): OptionDefinition
+    protected function getDefinedOption(string $name): OptionDefinition
     {
-        if ($this->definition->longOptionExists($name)) {
-            return $this->checkOptionCount($this->definition->getLongOption($name));
+        if ($this->definition->optionExists($name)) {
+            return $this->checkOptionCount($this->definition->getOption($name));
         }
 
         throw new ParseException("Option: [--{$name}] is not defined.", [

@@ -23,15 +23,15 @@ class CommandDefinition
      * @param string $name
      * @param string|null $description
      * @param array<string, ArgumentDefinition> $arguments
-     * @param array<string, OptionDefinition> $longOptions
-     * @param array<string, OptionDefinition> $shortOptions
+     * @param array<string, OptionDefinition> $options
+     * @param array<string, string> $shortNameAliases
      */
     public function __construct(
         protected string $name,
         protected ?string $description,
         array $arguments,
-        protected array $longOptions,
-        protected array $shortOptions,
+        protected array $options,
+        protected array $shortNameAliases,
     )
     {
         $this->argumentsByIndex = array_values($arguments);
@@ -83,44 +83,44 @@ class CommandDefinition
     /**
      * @return array<string, OptionDefinition>
      */
-    public function getLongOptions(): array
+    public function getOptions(): array
     {
-        return $this->longOptions;
+        return $this->options;
     }
 
     /**
      * @param string $name
      * @return bool
      */
-    public function longOptionExists(string $name): bool
+    public function optionExists(string $name): bool
     {
-        return array_key_exists($name, $this->longOptions);
+        return array_key_exists($name, $this->options);
     }
 
     /**
      * @param string $name
      * @return OptionDefinition
      */
-    public function getLongOption(string $name): OptionDefinition
+    public function getOption(string $name): OptionDefinition
     {
-        return $this->longOptions[$name];
+        return $this->options[$name];
     }
 
     /**
-     * @param string $name
+     * @param string $char
      * @return bool
      */
-    public function shortOptionExists(string $name): bool
+    public function shortOptionExists(string $char): bool
     {
-        return array_key_exists($name, $this->shortOptions);
+        return array_key_exists($char, $this->shortNameAliases);
     }
 
     /**
-     * @param string $name
+     * @param string $char
      * @return OptionDefinition
      */
-    public function getShortOption(string $name): OptionDefinition
+    public function getShortOption(string $char): OptionDefinition
     {
-        return $this->shortOptions[$name];
+        return $this->getOption($this->shortNameAliases[$char]);
     }
 }

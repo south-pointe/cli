@@ -40,21 +40,21 @@ abstract class Parameter
     }
 
     /**
-     * @param int $at
+     * @param int $index
      * @return string
      */
-    public function getValue(int $at = 0): ?string
+    public function getValue(int $index = 0): string
     {
         $values = $this->getValues();
 
-        if (!array_key_exists($at, $values)) {
-            throw new RuntimeException("No values exists at [{$at}]", [
-                'at' => $at,
+        if (!array_key_exists($index, $values)) {
+            throw new RuntimeException("No values exists at [{$index}]", [
+                'at' => $index,
                 'values' => $values,
             ]);
         }
 
-        return $values[$at];
+        return $values[$index];
     }
 
     /**
@@ -62,6 +62,6 @@ abstract class Parameter
      */
     public function getValues(): array
     {
-        return $this->values ?? [];
+        return $this->values;
     }
 }

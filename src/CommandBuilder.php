@@ -28,12 +28,12 @@ class CommandBuilder
     /**
      * @var array<string, OptionBuilder>
      */
-    protected array $longOptionBuilders = [];
+    protected array $optionBuilders = [];
 
     /**
-     * @var array<string, OptionBuilder>
+     * @var array<string, string>
      */
-    protected array $shortOptionBuilders = [];
+    protected array $shortNameAliases = [];
 
     /**
      * @param string $name
@@ -75,22 +75,22 @@ class CommandBuilder
     {
         $builder = new OptionBuilder($name, $short);
 
-        if (array_key_exists($name, $this->longOptionBuilders)) {
+        if (array_key_exists($name, $this->optionBuilders)) {
             throw new LogicException("Option [--{$name}] already exists.", [
                 'name' => $name,
-                'option' => $this->longOptionBuilders[$name],
+                'option' => $this->optionBuilders[$name],
             ]);
         }
-        $this->longOptionBuilders[$name] = $builder;
+        $this->optionBuilders[$name] = $builder;
 
         if ($short !== null) {
-            if (array_key_exists($short, $this->shortOptionBuilders)) {
+            if (array_key_exists($short, $this->shortNameAliases)) {
                 throw new LogicException("Option [-{$short}] already exists.", [
                     'name' => $name,
-                    'option' => $this->shortOptionBuilders[$short],
+                    'option' => $this->optionBuilders[$name],
                 ]);
             }
-            $this->shortOptionBuilders[$short] = $builder;
+            $this->shortNameAliases[$short] = $name;
         }
 
         return $builder;
@@ -107,22 +107,17 @@ class CommandBuilder
             $this->argumentBuilders
         );
 
-        $longOptions = array_map(
+        $options = array_map(
             fn(OptionBuilder $builder) => $builder->build(),
-            $this->longOptionBuilders
-        );
-
-        $shortOptions = array_map(
-            fn(OptionBuilder $builder) => $builder->build(),
-            $this->shortOptionBuilders
+            $this->optionBuilders
         );
 
         return new CommandDefinition(
             $this->name,
             $this->description,
             $arguments,
-            $longOptions,
-            $shortOptions,
+            $options,
+            $this->shortNameAliases,
         );
     }
 }
