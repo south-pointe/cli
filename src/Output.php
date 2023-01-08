@@ -2,46 +2,54 @@
 
 namespace SouthPointe\Cli;
 
-use SouthPointe\Ansi\Codes\Color;
 use SouthPointe\Cli\Output\Decorator;
-use SouthPointe\Stream\Stream;
+use SouthPointe\Stream\StreamWritable;
+use function implode;
 
 class Output
 {
     /**
-     * @param Stream $stdout
-     * @param Stream $stderr
+     * @param StreamWritable $stdout
+     * @param StreamWritable $stderr
      * @param Decorator $decorator
      */
     public function __construct(
-        readonly public Stream $stdout,
-        readonly public Stream $stderr,
+        readonly public StreamWritable $stdout,
+        readonly public StreamWritable $stderr,
         public readonly Decorator $decorator,
     )
     {
     }
 
     /**
-     * @param string $text
-     * @param Color|null $foreground
-     * @param Color|null $background
+     * @param string ...$text
      * @return $this
      */
-    public function text(string $text, ?Color $foreground = null, ?Color $background = null): static
+    protected function toStdout(string ...$text): static
     {
-        if ($foreground !== null) {
-            $this->stdout->fgColor($foreground);
-        }
-
-        if ($background !== null) {
-            $this->stdout->bgColor($background);
-        }
-
-        $this->stdout->text($text)
-            ->resetStyle()
-            ->flush();
-
+        $this->stdout->write(implode('', $text));
         return $this;
+    }
+
+    /**
+     * @param string ...$text
+     * @return $this
+     */
+    protected function toStderr(string ...$text): static
+    {
+        $this->stderr->write(implode('', $text));
+        return $this;
+    }
+
+    /**
+     * @param string $text
+     * @return $this
+     */
+    public function text(string $text): static
+    {
+        return $this->toStdout(
+            $this->decorator->text($text),
+        );
     }
 
     /**
@@ -50,12 +58,10 @@ class Output
      */
     public function line(?string $text = null): static
     {
-        $buffer = $text !== null
-            ? $this->stdout->line($text)
-            : $this->stdout->lineFeed();
-        $buffer->flush();
-
-        return $this;
+        return $this->toStdout(
+            $this->decorator->text($text ?? ''),
+            $this->decorator->newLine(),
+        );
     }
 
     /**
@@ -64,12 +70,10 @@ class Output
      */
     public function debug(string $text): static
     {
-        $this->stdout
-            ->fgColor(Color::Gray)
-            ->line($text)
-            ->flush();
-
-        return $this;
+        return $this->toStdout(
+            $this->decorator->debug($text),
+            $this->decorator->newLine(),
+        );
     }
 
     /**
@@ -78,7 +82,10 @@ class Output
      */
     public function info(string $text): static
     {
-        return $this->line($text);
+        return $this->toStdout(
+            $this->decorator->info($text),
+            $this->decorator->newLine(),
+        );
     }
 
     /**
@@ -87,12 +94,10 @@ class Output
      */
     public function notice(string $text): static
     {
-        $this->stdout
-            ->fgColor(Color::Green)
-            ->line($text)
-            ->flush();
-
-        return $this;
+        return $this->toStdout(
+            $this->decorator->notice($text),
+            $this->decorator->newLine(),
+        );
     }
 
     /**
@@ -101,12 +106,10 @@ class Output
      */
     public function warning(string $text): static
     {
-        $this->stderr
-            ->fgColor(Color::Yellow)
-            ->line($text)
-            ->flush();
-
-        return $this;
+        return $this->toStderr(
+            $this->decorator->warning($text),
+            $this->decorator->newLine(),
+        );
     }
 
     /**
@@ -115,13 +118,10 @@ class Output
      */
     public function error(string $text): static
     {
-        $this->stderr
-            ->fgColor(Color::Red)
-            ->line($text)
-            ->resetStyle()
-            ->flush();
-
-        return $this;
+        return $this->toStderr(
+            $this->decorator->error($text),
+            $this->decorator->newLine(),
+        );
     }
 
     /**
@@ -130,14 +130,10 @@ class Output
      */
     public function critical(string $text): static
     {
-        $this->stderr
-            ->bgColor(Color::Red)
-            ->fgColor(Color::White)
-            ->line($text)
-            ->resetStyle()
-            ->flush();
-
-        return $this;
+        return $this->toStderr(
+            $this->decorator->critical($text),
+            $this->decorator->newLine(),
+        );
     }
 
     /**
@@ -146,14 +142,9 @@ class Output
      */
     public function alert(string $text): static
     {
-        $this->stderr
-            ->bgColor(Color::Red)
-            ->fgColor(Color::White)
-            ->blink()
-            ->line($text)
-            ->resetStyle()
-            ->flush();
-
-        return $this;
+        return $this->toStderr(
+            $this->decorator->alert($text),
+            $this->decorator->newLine(),
+        );
     }
 }

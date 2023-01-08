@@ -5,6 +5,17 @@ namespace SouthPointe\Cli\Output;
 interface Decorator
 {
     /**
+     * @return string
+     */
+    public function newLine(): string;
+
+    /**
+     * @param string $text
+     * @return string
+     */
+    public function text(string $text): string;
+
+    /**
      * @param string $text
      * @return string
      */

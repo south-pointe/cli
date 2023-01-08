@@ -14,85 +14,97 @@ readonly class AnsiDecorator implements Decorator
     }
 
     /**
-     * @param string $text
-     * @return string
+     * @inheritDoc
+     */
+    public function newLine(): string
+    {
+        return $this->buffer->lineFeed()->extract();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function text(string $text): string
+    {
+        return $this->buffer
+            ->text($text)
+            ->resetStyle()
+            ->extract();
+    }
+
+    /**
+     * @inheritDoc
      */
     public function debug(string $text): string
     {
         return $this->buffer
             ->fgColor(Color::Gray)
-            ->line($text)
+            ->text($text)
             ->resetStyle()
             ->extract();
     }
 
     /**
-     * @param string $text
-     * @return string
+     * @inheritDoc
      */
     public function info(string $text): string
     {
         return $this->buffer
-            ->line($text)
+            ->text($text)
             ->extract();
     }
 
     /**
-     * @param string $text
-     * @return string
+     * @inheritDoc
      */
     public function notice(string $text): string
     {
         return $this->buffer
             ->fgColor(Color::Green)
-            ->line($text)
+            ->text($text)
             ->resetStyle()
             ->extract();
     }
 
     /**
-     * @param string $text
-     * @return string
+     * @inheritDoc
      */
     public function warning(string $text): string
     {
         return $this->buffer
             ->fgColor(Color::Yellow)
-            ->line($text)
+            ->text($text)
             ->resetStyle()
             ->extract();
     }
 
     /**
-     * @param string $text
-     * @return string
+     * @inheritDoc
      */
     public function error(string $text): string
     {
         return $this->buffer
             ->fgColor(Color::Red)
-            ->line($text)
+            ->text($text)
             ->resetStyle()
             ->extract();
     }
 
     /**
-     * @param string $text
-     * @return string
+     * @inheritDoc
      */
     public function critical(string $text): string
     {
         return $this->buffer
             ->bgColor(Color::Red)
             ->fgColor(Color::White)
-            ->line($text)
+            ->text($text)
             ->resetStyle()
             ->extract();
     }
 
     /**
-     * @param string $text
-     * @return string
+     * @inheritDoc
      */
     public function alert(string $text): string
     {
@@ -100,7 +112,7 @@ readonly class AnsiDecorator implements Decorator
             ->bgColor(Color::Red)
             ->fgColor(Color::White)
             ->blink()
-            ->line($text)
+            ->text($text)
             ->resetStyle()
             ->extract();
     }
