@@ -49,6 +49,7 @@
       <path value="$PROJECT_DIR$/vendor/south-pointe/ansi" />
       <path value="$PROJECT_DIR$/vendor/south-pointe/core" />
       <path value="$PROJECT_DIR$/vendor/south-pointe/dumper" />
+      <path value="$PROJECT_DIR$/vendor/south-pointe/stream" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2">

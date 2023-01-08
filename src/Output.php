@@ -3,17 +3,20 @@
 namespace SouthPointe\Cli;
 
 use SouthPointe\Ansi\Codes\Color;
-use SouthPointe\Ansi\Stream;
+use SouthPointe\Cli\Output\Decorator;
+use SouthPointe\Stream\Stream;
 
 class Output
 {
     /**
      * @param Stream $stdout
      * @param Stream $stderr
+     * @param Decorator $decorator
      */
     public function __construct(
         readonly public Stream $stdout,
         readonly public Stream $stderr,
+        public readonly Decorator $decorator,
     )
     {
     }

@@ -11,6 +11,7 @@
       <excludeFolder url="file://$MODULE_DIR$/vendor/south-pointe/core" />
       <excludeFolder url="file://$MODULE_DIR$/vendor/south-pointe/dumper" />
       <excludeFolder url="file://$MODULE_DIR$/.coverage" />
+      <excludeFolder url="file://$MODULE_DIR$/vendor/south-pointe/stream" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

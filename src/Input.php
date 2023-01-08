@@ -4,16 +4,15 @@ namespace SouthPointe\Cli;
 
 use Closure;
 use RuntimeException;
+use SouthPointe\Ansi\Stream as AnsiStream;
 use SouthPointe\Cli\Input\InputInfo;
 use SouthPointe\Cli\Input\Readline;
+use SouthPointe\Stream\Streamable;
 use function array_key_exists;
 use function array_keys;
 use function array_map;
-use function assert;
 use function filter_var;
-use function fopen;
 use function grapheme_strlen;
-use function is_resource;
 use function max;
 use function preg_match;
 use function readline_callback_handler_install;
@@ -32,10 +31,12 @@ use const PHP_INT_MAX;
 class Input
 {
     /**
-     * @param Output $output
+     * @param AnsiStream $output
+     * @param Streamable $stream
      */
     public function __construct(
-        readonly protected Output $output,
+        readonly protected AnsiStream $output,
+        readonly protected Streamable $stream,
     )
     {
     }
@@ -51,7 +52,7 @@ class Input
 
     public function integer(string $prompt = ''): ?int
     {
-        $ansi = $this->output->stdout;
+        $ansi = $this->output;
         $value = null;
         $this->readline($prompt, function(InputInfo $info) use ($ansi, &$value) {
             if ($info->done) {
@@ -152,7 +153,7 @@ class Input
 
         // HACK: Pressing enter with no input shows duplicated prompt
         // for some reason, so we have to add a line feed.
-        $this->output->line();
+        $this->output->lineFeed();
 
         return $input;
     }
@@ -165,7 +166,7 @@ class Input
     public function masked(string $prompt = '', string $replacement = '*'): string
     {
         return $this->readline($prompt, function (InputInfo $info) use ($prompt, $replacement) {
-            $this->output->stdout
+            $this->output
                 // Clear all output up to the end of prompt text.
                 ->cursorBack(9999)->eraseToEndOfLine()
                 // Write replacement text (will set the cursor to the end).
@@ -185,9 +186,9 @@ class Input
      */
     public function readline(string $prompt = '', ?Closure $onKeyInput = null): string
     {
-        $stream = $this->getInputStream();
+        $stream = $this->stream->getResource();
         $info = new InputInfo($prompt);
-        $readline = new Readline($this->output->stdout, $info);
+        $readline = new Readline($this->output, $info);
 
         readline_callback_handler_install($prompt, static fn() => true);
         try {
@@ -295,15 +296,5 @@ class Input
         }
 
         return $input;
-    }
-
-    /**
-     * @return resource
-     */
-    protected function getInputStream(): mixed
-    {
-        $stream = fopen('php://stdin', 'r');
-        assert(is_resource($stream));
-        return $stream;
     }
 }

@@ -10,6 +10,7 @@
     "ext-readline": "*",
     "south-pointe/ansi": "dev-main",
     "south-pointe/core": "dev-main",
+    "south-pointe/stream": "dev-main",
     "webmozart/assert": "^1.11"
   },
   "require-dev": {
