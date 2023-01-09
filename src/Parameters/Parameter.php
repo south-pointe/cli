@@ -16,27 +16,11 @@ abstract class Parameter
      * @param list<string> $values
      */
     public function __construct(
-        protected readonly ParameterDefinition $defined,
-        protected readonly bool $wasEntered,
-        protected readonly array $values = [],
+        public readonly ParameterDefinition $defined,
+        public readonly bool $wasEntered,
+        public readonly array $values = [],
     )
     {
-    }
-
-    /**
-     * @return TDefined
-     */
-    public function getDefinition(): ParameterDefinition
-    {
-        return $this->defined;
-    }
-
-    /**
-     * @return bool
-     */
-    public function wasEntered(): bool
-    {
-        return $this->wasEntered;
     }
 
     /**
@@ -45,7 +29,7 @@ abstract class Parameter
      */
     public function getValue(int $index = 0): string
     {
-        $values = $this->getValues();
+        $values = $this->values;
 
         if (!array_key_exists($index, $values)) {
             throw new RuntimeException("No values exists at [{$index}]", [
@@ -55,13 +39,5 @@ abstract class Parameter
         }
 
         return $values[$index];
-    }
-
-    /**
-     * @return list<string>
-     */
-    public function getValues(): array
-    {
-        return $this->values;
     }
 }

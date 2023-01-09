@@ -61,8 +61,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(0, $parsed['options']);
 
         $argument = $parsed['arguments']['a'];
-        self::assertTrue($argument->wasEntered());
-        self::assertSame(['1'], $argument->getValues());
+        self::assertTrue($argument->wasEntered);
+        self::assertSame(['1'], $argument->values);
     }
 
     public function test_argument_missing(): void
@@ -99,7 +99,7 @@ class CommandBuilderTest extends TestCase
         $parsed = $this->parse($builder, []);
 
         self::assertCount(1, $parsed['arguments']);
-        self::assertFalse($parsed['arguments']['a']->wasEntered());
+        self::assertFalse($parsed['arguments']['a']->wasEntered);
     }
 
     public function test_argument_as_optional_with_default_fallback(): void
@@ -111,8 +111,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['arguments']);
 
         $argument = $parsed['arguments']['a'];
-        self::assertFalse($argument->wasEntered());
-        self::assertSame(['1'], $argument->getValues());
+        self::assertFalse($argument->wasEntered);
+        self::assertSame(['1'], $argument->values);
     }
 
     public function test_argument_as_optional_with_default(): void
@@ -124,8 +124,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['arguments']);
 
         $argument = $parsed['arguments']['a'];
-        self::assertTrue($argument->wasEntered());
-        self::assertSame(['x'], $argument->getValues());
+        self::assertTrue($argument->wasEntered);
+        self::assertSame(['x'], $argument->values);
     }
 
     public function test_argument_with_multiple_definitions_with_optional_first_with_fallback(): void
@@ -139,10 +139,10 @@ class CommandBuilderTest extends TestCase
 
         $argument_a = $parsed['arguments']['a'];
         $argument_b = $parsed['arguments']['b'];
-        self::assertTrue($argument_a->wasEntered());
-        self::assertTrue($argument_b->wasEntered());
-        self::assertSame(['x'], $argument_a->getValues());
-        self::assertSame(['y'], $argument_b->getValues());
+        self::assertTrue($argument_a->wasEntered);
+        self::assertTrue($argument_b->wasEntered);
+        self::assertSame(['x'], $argument_a->values);
+        self::assertSame(['y'], $argument_b->values);
     }
 
     public function test_argument_with_multiple_definitions_with_optional_first(): void
@@ -166,10 +166,10 @@ class CommandBuilderTest extends TestCase
 
         $argument_a = $parsed['arguments']['a'];
         $argument_b = $parsed['arguments']['b'];
-        self::assertFalse($argument_a->wasEntered());
-        self::assertFalse($argument_b->wasEntered());
-        self::assertSame(['1'], $argument_a->getValues());
-        self::assertSame(['2'], $argument_b->getValues());
+        self::assertFalse($argument_a->wasEntered);
+        self::assertFalse($argument_b->wasEntered);
+        self::assertSame(['1'], $argument_a->values);
+        self::assertSame(['2'], $argument_b->values);
     }
 
     public function test_argument_overflow(): void
@@ -202,8 +202,8 @@ class CommandBuilderTest extends TestCase
 
         $argument_a = $parsed['arguments']['a'];
         $argument_b = $parsed['arguments']['b'];
-        self::assertSame(['1'], $argument_a->getValues());
-        self::assertSame(['2', '3'], $argument_b->getValues());
+        self::assertSame(['1'], $argument_a->values);
+        self::assertSame(['2', '3'], $argument_b->values);
     }
 
     public function test_argument_single_after_multi(): void
@@ -225,8 +225,8 @@ class CommandBuilderTest extends TestCase
 
         $argument_a = $parsed['arguments']['a'];
         $argument_b = $parsed['arguments']['b'];
-        self::assertSame(['1', '2', '3'], $argument_a->getValues());
-        self::assertSame(['4'], $argument_b->getValues());
+        self::assertSame(['1', '2', '3'], $argument_a->values);
+        self::assertSame(['4'], $argument_b->values);
     }
 
     public function test_option__long__name_collision(): void
@@ -256,8 +256,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertTrue($option->wasEntered());
-        self::assertSame([null], $option->getValues());
+        self::assertTrue($option->wasEntered);
+        self::assertSame([''], $option->values);
     }
 
     public function test_option__long__no_value__default(): void
@@ -269,8 +269,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertTrue($option->wasEntered());
-        self::assertSame(['d'], $option->getValues());
+        self::assertTrue($option->wasEntered);
+        self::assertSame(['d'], $option->values);
     }
 
     public function test_option__long__no_value__value_required(): void
@@ -291,8 +291,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertTrue($option->wasEntered());
-        self::assertSame(['text'], $option->getValues());
+        self::assertTrue($option->wasEntered);
+        self::assertSame(['text'], $option->values);
     }
 
     public function test_option__long__equal_value(): void
@@ -304,8 +304,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertTrue($option->wasEntered());
-        self::assertSame(['text'], $option->getValues());
+        self::assertTrue($option->wasEntered);
+        self::assertSame(['text'], $option->values);
     }
 
     public function test_option__long__multiple(): void
@@ -317,8 +317,17 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertTrue($option->wasEntered());
-        self::assertSame(['1', '2'], $option->getValues());
+        self::assertTrue($option->wasEntered);
+        self::assertSame(['1', '2'], $option->values);
+    }
+
+    public function test_option__long__multiple_not_allowed(): void
+    {
+        $this->expectException(ParseException::class);
+        $this->expectExceptionMessage('Option: [--all] cannot be entered more than once.');
+        $builder = $this->makeBuilder();
+        $builder->option('all');
+        $this->parse($builder, ['--all=1', '--all=2']);
     }
 
     public function test_option__long__multiple__no_input(): void
@@ -330,8 +339,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertFalse($option->wasEntered());
-        self::assertSame([], $option->getValues());
+        self::assertFalse($option->wasEntered);
+        self::assertSame([], $option->values);
     }
 
     public function test_option__long__multiple__default(): void
@@ -343,8 +352,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertFalse($option->wasEntered());
-        self::assertSame(['3'], $option->getValues());
+        self::assertFalse($option->wasEntered);
+        self::assertSame(['3'], $option->values);
     }
 
     public function test_option__long__multiple__default_no_fallback(): void
@@ -356,8 +365,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertTrue($option->wasEntered());
-        self::assertSame(['1'], $option->getValues());
+        self::assertTrue($option->wasEntered);
+        self::assertSame(['1'], $option->values);
     }
 
     public function test_option__long__multiple__with_other_options_in_between(): void
@@ -371,9 +380,9 @@ class CommandBuilderTest extends TestCase
 
         $optionAll = $parsed['options']['all'];
         $optionBee = $parsed['options']['bee'];
-        self::assertTrue($optionAll->wasEntered());
-        self::assertSame(['1', '2'], $optionAll->getValues());
-        self::assertSame([null], $optionBee->getValues());
+        self::assertTrue($optionAll->wasEntered);
+        self::assertSame(['1', '2'], $optionAll->values);
+        self::assertSame([''], $optionBee->values);
     }
 
     public function test_option__short__name_collision(): void
@@ -403,8 +412,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertTrue($option->wasEntered());
-        self::assertSame([null], $option->getValues());
+        self::assertTrue($option->wasEntered);
+        self::assertSame([''], $option->values);
     }
 
     public function test_option__short__spaced_value(): void
@@ -416,8 +425,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertTrue($option->wasEntered());
-        self::assertSame(['text'], $option->getValues());
+        self::assertTrue($option->wasEntered);
+        self::assertSame(['text'], $option->values);
     }
 
     public function test_option__short__equal_value(): void
@@ -438,8 +447,8 @@ class CommandBuilderTest extends TestCase
         self::assertCount(1, $parsed['options']);
 
         $option = $parsed['options']['all'];
-        self::assertTrue($option->wasEntered());
-        self::assertSame(['d'],$option->getValues());
+        self::assertTrue($option->wasEntered);
+        self::assertSame(['d'],$option->values);
     }
 
     public function test_option__short__no_value__value_required(): void
@@ -462,10 +471,10 @@ class CommandBuilderTest extends TestCase
 
         $optionAll = $parsed['options']['all'];
         $optionBee = $parsed['options']['bee'];
-        self::assertTrue($optionAll->wasEntered());
-        self::assertTrue($optionBee->wasEntered());
-        self::assertSame([null], $optionAll->getValues());
-        self::assertSame([null], $optionBee->getValues());
+        self::assertTrue($optionAll->wasEntered);
+        self::assertTrue($optionBee->wasEntered);
+        self::assertSame([''], $optionAll->values);
+        self::assertSame([''], $optionBee->values);
     }
 
     public function test_option__short__consecutive_chars__default(): void
@@ -479,13 +488,13 @@ class CommandBuilderTest extends TestCase
 
         $optionAll = $parsed['options']['all'];
         $optionBee = $parsed['options']['bee'];
-        self::assertTrue($optionAll->wasEntered());
-        self::assertTrue($optionBee->wasEntered());
-        self::assertSame(['1'], $optionAll->getValues());
-        self::assertSame(['2'], $optionBee->getValues());
+        self::assertTrue($optionAll->wasEntered);
+        self::assertTrue($optionBee->wasEntered);
+        self::assertSame(['1'], $optionAll->values);
+        self::assertSame(['2'], $optionBee->values);
     }
 
-    public function test_option__short__multiple(): void
+    public function test_option__short__define_more_than_one(): void
     {
         $builder = $this->makeBuilder();
         $builder->option('all', 'a')->requiresValue('1');
@@ -496,9 +505,22 @@ class CommandBuilderTest extends TestCase
 
         $optionAll = $parsed['options']['all'];
         $optionBee = $parsed['options']['bee'];
-        self::assertTrue($optionAll->wasEntered());
-        self::assertTrue($optionBee->wasEntered());
-        self::assertSame(['1'],$optionAll->getValues());
-        self::assertSame(['2'], $optionBee->getValues());
+        self::assertTrue($optionAll->wasEntered);
+        self::assertTrue($optionBee->wasEntered);
+        self::assertSame(['1'],$optionAll->values);
+        self::assertSame(['2'], $optionBee->values);
+    }
+
+    public function test_option__short__multiple(): void
+    {
+        $builder = $this->makeBuilder();
+        $builder->option('verbose', 'v')->allowMultiple();
+        $parsed = $this->parse($builder, ['-vvv']);
+
+        self::assertCount(1, $parsed['options']);
+
+        $verbose = $parsed['options']['verbose'];
+        self::assertTrue($verbose->wasEntered);
+        self::assertSame(['', '', ''],$verbose->values);
     }
 }

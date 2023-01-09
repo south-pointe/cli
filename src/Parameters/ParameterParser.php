@@ -170,7 +170,7 @@ class ParameterParser
             ]);
         }
 
-        $this->addOptionValue($defined, $value);
+        $this->addOptionValue($defined, $value ?? '');
 
         $this->parameterCursor++;
     }
@@ -198,6 +198,7 @@ class ParameterParser
                     break;
                 }
 
+                // No values defined. Use default value.
                 $default = $defined->default;
 
                 if ($default === null && $defined->valueRequired) {
@@ -207,14 +208,14 @@ class ParameterParser
                     ]);
                 }
 
-                $this->addOptionValue($defined, $default);
+                $this->addOptionValue($defined, $default ?? '');
                 $this->parameterCursor++;
                 break;
             }
 
             // if next char is another option, add the current option and move on.
             if ($this->definition->shortOptionExists($nextChar)) {
-                $this->addOptionValue($defined, $defined->default);
+                $this->addOptionValue($defined, $defined->default ?? '');
                 $this->parameterCursor++;
                 continue;
             }
@@ -274,7 +275,7 @@ class ParameterParser
             }
 
             if (!$argument->optional) {
-                throw new ParseException("Missing required argument: {$name}", [
+                throw new ParseException("Missing required argument: {$name}.", [
                     'parameters' => $this->parameters,
                     'argument' => $argument,
                 ]);
@@ -333,7 +334,7 @@ class ParameterParser
         $values = $this->optionValues[$name] ?? [];
 
         if (count($values) > 1 && !$option->allowMultiple) {
-            throw new ParseException("Option: [--{$name}] cannot be entered more than once", [
+            throw new ParseException("Option: [--{$name}] cannot be entered more than once.", [
                 'option' => $option,
                 'parameters' => $this->parameters,
             ]);
