@@ -7,6 +7,7 @@ use RuntimeException;
 use SouthPointe\Ansi\Stream as AnsiStream;
 use SouthPointe\Cli\Input\InputInfo;
 use SouthPointe\Cli\Input\Readline;
+use SouthPointe\Stream\Stdin;
 use SouthPointe\Stream\Streamable;
 use function array_key_exists;
 use function array_keys;
@@ -31,12 +32,12 @@ use const PHP_INT_MAX;
 class Input
 {
     /**
-     * @param AnsiStream $output
      * @param Streamable $stream
+     * @param AnsiStream $output
      */
     public function __construct(
-        readonly protected AnsiStream $output,
-        readonly protected Streamable $stream,
+        readonly protected Streamable $stream = new Stdin(),
+        readonly protected AnsiStream $output = new AnsiStream(),
     )
     {
     }
