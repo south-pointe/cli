@@ -8,6 +8,7 @@ use SouthPointe\Cli\Definitions\OptionDefinition;
 use SouthPointe\Cli\Definitions\ParameterDefinition;
 use SouthPointe\Cli\Exceptions\ParseException;
 use function array_is_list;
+use function array_key_exists;
 use function count;
 use function explode;
 use function gettype;
@@ -157,7 +158,7 @@ class ParameterParser
             ]);
         }
 
-        $this->addOptionValue($defined, $value ?? '');
+        $this->addOptionValue($defined, $value);
 
         $this->parameterCursor++;
     }
@@ -195,14 +196,14 @@ class ParameterParser
                     ]);
                 }
 
-                $this->addOptionValue($defined, $default ?? '');
+                $this->addOptionValue($defined, $default);
                 $this->parameterCursor++;
                 break;
             }
 
             // if next char is another option, add the current option and move on.
             if ($this->definition->shortOptionExists($nextChar)) {
-                $this->addOptionValue($defined, $defined->default ?? '');
+                $this->addOptionValue($defined, $defined->default);
                 $this->parameterCursor++;
                 continue;
             }
@@ -305,7 +306,7 @@ class ParameterParser
             ]);
         }
 
-        return $this->checkOptionCount($defined);
+        return $defined;
     }
 
     /**
@@ -324,25 +325,6 @@ class ParameterParser
             ]);
         }
 
-        return $this->checkOptionCount($defined);
-    }
-
-    /**
-     * @param OptionDefinition $defined
-     * @return OptionDefinition
-     */
-    protected function checkOptionCount(OptionDefinition $defined): OptionDefinition
-    {
-        $name = $defined->name;
-        $values = $this->optionValues[$name] ?? [];
-
-        if (count($values) > 1 && !$defined->allowMultiple) {
-            throw new ParseException("Option: [--{$name}] cannot be entered more than once.", [
-                'defined' => $defined,
-                'parameters' => $this->parameters,
-            ]);
-        }
-
         return $defined;
     }
 
@@ -353,7 +335,16 @@ class ParameterParser
      */
     protected function addOptionValue(OptionDefinition $defined, mixed $value): void
     {
-        $this->optionValues[$defined->name][] = $value;
+        $name = $defined->name;
+
+        if (array_key_exists($name, $this->optionValues) && !$defined->allowMultiple) {
+            throw new ParseException("Option: [--{$name}] cannot be entered more than once.", [
+                'defined' => $defined,
+                'parameters' => $this->parameters,
+            ]);
+        }
+
+        $this->optionValues[$name][] = $value ?? '';
     }
 
     /**
