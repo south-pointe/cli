@@ -7,9 +7,7 @@ use SouthPointe\Cli\Definitions\ArgumentDefinition;
 use SouthPointe\Cli\Definitions\OptionDefinition;
 use SouthPointe\Cli\Definitions\ParameterDefinition;
 use SouthPointe\Cli\Exceptions\ParseException;
-use function array_diff_key;
 use function array_is_list;
-use function array_slice;
 use function count;
 use function explode;
 use function gettype;
@@ -63,35 +61,13 @@ class ParameterParser
     public function parse(): array
     {
         $parameterCount = count($this->parameters);
-
         while ($this->parameterCursor < $parameterCount) {
-            $parameter = $this->parameters[$this->parameterCursor];
-            match (true) {
-                $this->isLongOption($parameter) => $this->processLongOption($parameter),
-                $this->isShortOption($parameter) => $this->processShortOptions($parameter),
-                default => $this->processArgument($parameter),
-            };
-        }
-
-        $arguments = [];
-        foreach ($this->argumentValues as $name => $values) {
-            $arguments[$name] = $this->makeArgument($name, $values);
-        }
-        $arguments = $this->appendRemainingArguments($arguments);
-
-        $options = [];
-        foreach ($this->optionValues as $name => $values) {
-            $options[$name] = $this->makeOption($name, $values);
-        }
-        $all = $this->definition->getOptions();
-        $remaining = array_diff_key($all, $options);
-        foreach ($remaining as $name => $defined) {
-            $options[$name] = $this->makeDefaultOption($defined);
+            $this->processParameter();
         }
 
         return [
-            'arguments' => $arguments,
-            'options' => $options,
+            'arguments' => $this->makeArguments(),
+            'options' => $this->makeOptions(),
         ];
     }
 
@@ -139,10 +115,23 @@ class ParameterParser
     }
 
     /**
+     * @return void
+     */
+    protected function processParameter(): void
+    {
+        $parameter = $this->parameters[$this->parameterCursor];
+        match (true) {
+            $this->isLongOption($parameter) => $this->processAsLongOption($parameter),
+            $this->isShortOption($parameter) => $this->processAsShortOptions($parameter),
+            default => $this->processAsArgument($parameter),
+        };
+    }
+
+    /**
      * @param string $parameter
      * @return void
      */
-    protected function processLongOption(string $parameter): void
+    protected function processAsLongOption(string $parameter): void
     {
         $parts = explode('=', ltrim($parameter, '-'));
         $name = $parts[0];
@@ -163,7 +152,7 @@ class ParameterParser
 
         if ($value === null && $defined->valueRequired) {
             throw new ParseException("Option: [--{$name}] requires a value.", [
-                'option' => $defined,
+                'defined' => $defined,
                 'parameter' => $parameter,
             ]);
         }
@@ -177,7 +166,7 @@ class ParameterParser
      * @param string $parameter
      * @return void
      */
-    protected function processShortOptions(string $parameter): void
+    protected function processAsShortOptions(string $parameter): void
     {
         $chars = ltrim($parameter, '-');
 
@@ -201,7 +190,7 @@ class ParameterParser
 
                 if ($default === null && $defined->valueRequired) {
                     throw new ParseException("Option: [-{$char}] requires a value.", [
-                        'option' => $defined,
+                        'defined' => $defined,
                         'parameter' => $parameter,
                     ]);
                 }
@@ -239,7 +228,7 @@ class ParameterParser
      * @param string $parameter
      * @return void
      */
-    protected function processArgument(string $parameter): void
+    protected function processAsArgument(string $parameter): void
     {
         $defined = $this->definition->getArgumentByIndexOrNull($this->argumentCursor);
 
@@ -260,29 +249,45 @@ class ParameterParser
     }
 
     /**
-     * @param array<string, Argument> $arguments
      * @return array<string, Argument>
      */
-    protected function appendRemainingArguments(array $arguments): array
+    protected function makeArguments(): array
     {
-        $all = $this->definition->getArguments();
-        $remaining = array_slice($all, $this->argumentCursor, null, true);
-        foreach ($remaining as $name => $argument) {
-            if ($argument->allowMultiple && isset($this->argumentValues[$name])) {
+        $arguments = [];
+        foreach ($this->definition->getArguments() as $name => $defined) {
+            $values = $this->argumentValues[$name] ?? null;
+
+            if ($values !== null) {
+                $arguments[$name] = new Argument($defined, true, $values);
                 continue;
             }
 
-            if (!$argument->optional) {
+            if (!$defined->optional) {
                 throw new ParseException("Missing required argument: {$name}.", [
                     'parameters' => $this->parameters,
-                    'argument' => $argument,
+                    'defined' => $defined,
                 ]);
             }
 
-            $arguments[$name] = $this->makeDefaultArgument($argument);
+            $arguments[$name] = new Argument($defined, false, $this->getDefaultValue($defined));
         }
 
         return $arguments;
+    }
+
+    /**
+     * @return array<string, Option>
+     */
+    protected function makeOptions(): array
+    {
+        $options = [];
+        foreach ($this->definition->getOptions() as $name => $defined) {
+            $values = $this->optionValues[$name] ?? null;
+            $options[$name] = $values !== null
+                ? new Option($defined, true, $values)
+                : new Option($defined, false, $this->getDefaultValue($defined));
+        }
+        return $options;
     }
 
     /**
@@ -323,41 +328,22 @@ class ParameterParser
     }
 
     /**
-     * @param OptionDefinition $option
+     * @param OptionDefinition $defined
      * @return OptionDefinition
      */
-    protected function checkOptionCount(OptionDefinition $option): OptionDefinition
+    protected function checkOptionCount(OptionDefinition $defined): OptionDefinition
     {
-        $name = $option->name;
+        $name = $defined->name;
         $values = $this->optionValues[$name] ?? [];
 
-        if (count($values) > 1 && !$option->allowMultiple) {
+        if (count($values) > 1 && !$defined->allowMultiple) {
             throw new ParseException("Option: [--{$name}] cannot be entered more than once.", [
-                'option' => $option,
+                'defined' => $defined,
                 'parameters' => $this->parameters,
             ]);
         }
 
-        return $option;
-    }
-
-    /**
-     * @param string $name
-     * @param list<string> $values
-     * @return Argument
-     */
-    protected function makeArgument(string $name, array $values): Argument
-    {
-        return new Argument($this->definition->getArgument($name), true, $values);
-    }
-
-    /**
-     * @param ArgumentDefinition $defined
-     * @return Argument
-     */
-    protected function makeDefaultArgument(ArgumentDefinition $defined): Argument
-    {
-        return new Argument($defined, false, $this->getDefaultValue($defined));
+        return $defined;
     }
 
     /**
@@ -365,31 +351,9 @@ class ParameterParser
      * @param mixed $value
      * @return void
      */
-    protected function addOptionValue(
-        OptionDefinition $defined,
-        mixed $value
-    ): void
+    protected function addOptionValue(OptionDefinition $defined, mixed $value): void
     {
         $this->optionValues[$defined->name][] = $value;
-    }
-
-    /**
-     * @param string $name
-     * @param list<string> $values
-     * @return Option
-     */
-    protected function makeOption(string $name, array $values): Option
-    {
-        return new Option($this->getDefinedOption($name), true, $values);
-    }
-
-    /**
-     * @param OptionDefinition $defined
-     * @return Option
-     */
-    protected function makeDefaultOption(OptionDefinition $defined): Option
-    {
-        return new Option($defined, false, $this->getDefaultValue($defined));
     }
 
     /**
