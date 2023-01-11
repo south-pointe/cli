@@ -2,7 +2,10 @@
 
 namespace SouthPointe\Cli;
 
+use SouthPointe\Cli\Output\AnsiDecorator;
 use SouthPointe\Cli\Output\Decorator;
+use SouthPointe\Stream\Stderr;
+use SouthPointe\Stream\Stdout;
 use SouthPointe\Stream\StreamWritable;
 use function implode;
 
@@ -14,9 +17,9 @@ class Output
      * @param Decorator $decorator
      */
     public function __construct(
-        readonly public StreamWritable $stdout,
-        readonly public StreamWritable $stderr,
-        public readonly Decorator $decorator,
+        public readonly StreamWritable $stdout = new Stdout(),
+        public readonly StreamWritable $stderr = new Stderr(),
+        public readonly Decorator $decorator = new AnsiDecorator(),
     )
     {
     }

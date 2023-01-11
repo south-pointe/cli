@@ -5,17 +5,14 @@ namespace SouthPointe\Cli\Definitions;
 class OptionBuilder extends ParameterBuilder
 {
     /**
-     * @var bool
-     */
-    protected bool $valueRequired = false;
-
-    /**
      * @param string $name
      * @param string|null $short
+     * @param bool $valueRequired
      */
     public function __construct(
         string $name,
         protected ?string $short = null,
+        protected bool $valueRequired = false,
     )
     {
         parent::__construct($name);

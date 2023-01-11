@@ -11,29 +11,21 @@ use function array_map;
 class CommandBuilder
 {
     /**
-     * @var string|null
+     * @param string|null $name
+     * @param string $description
+     * @param array<string, ArgumentBuilder> $argumentBuilders
+     * @param array<string, OptionBuilder> $optionBuilders
+     * @param array<string, string> $shortNameAliases
      */
-    protected ?string $name = null;
-
-    /**
-     * @var string
-     */
-    protected string $description = '';
-
-    /**
-     * @var array<string, ArgumentBuilder>
-     */
-    protected array $argumentBuilders = [];
-
-    /**
-     * @var array<string, OptionBuilder>
-     */
-    protected array $optionBuilders = [];
-
-    /**
-     * @var array<string, string>
-     */
-    protected array $shortNameAliases = [];
+    public function __construct(
+        protected ?string $name = null,
+        protected string $description = '',
+        protected array $argumentBuilders = [],
+        protected array $optionBuilders = [],
+        protected array $shortNameAliases = [],
+    )
+    {
+    }
 
     /**
      * @param string $name
@@ -102,21 +94,11 @@ class CommandBuilder
             throw new LogicException('Name of command must be defined!');
         }
 
-        $arguments = array_map(
-            fn(ArgumentBuilder $builder) => $builder->build(),
-            $this->argumentBuilders
-        );
-
-        $options = array_map(
-            fn(OptionBuilder $builder) => $builder->build(),
-            $this->optionBuilders
-        );
-
         return new CommandDefinition(
             $this->name,
             $this->description,
-            $arguments,
-            $options,
+            array_map(fn($builder) => $builder->build(), $this->argumentBuilders),
+            array_map(fn($builder) => $builder->build(), $this->optionBuilders),
             $this->shortNameAliases,
         );
     }

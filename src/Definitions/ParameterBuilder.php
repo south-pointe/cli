@@ -5,25 +5,16 @@ namespace SouthPointe\Cli\Definitions;
 class ParameterBuilder
 {
     /**
-     * @var string
-     */
-    protected string $description = '';
-
-    /**
-     * @var bool
-     */
-    protected bool $allowMultiple = false;
-
-    /**
-     * @var string|list<string>|null
-     */
-    protected string|array|null $default = null;
-
-    /**
      * @param string $name
+     * @param string $description
+     * @param bool $allowMultiple
+     * @param string|list<string>|null $default
      */
     public function __construct(
         protected string $name,
+        protected string $description = '',
+        protected bool $allowMultiple = false,
+        protected string|array|null $default = null,
     )
     {
     }

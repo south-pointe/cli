@@ -75,15 +75,13 @@ class ParameterParser
 
         $arguments = [];
         foreach ($this->argumentValues as $name => $values) {
-            $defined = $this->definition->getArgument($name);
-            $arguments[$name] = new Argument($defined, true, $values);
+            $arguments[$name] = $this->makeArgument($name, $values);
         }
         $arguments = $this->appendRemainingArguments($arguments);
 
         $options = [];
         foreach ($this->optionValues as $name => $values) {
-            $defined = $this->getDefinedOption($name);
-            $options[$name] = new Option($defined, true, $values);
+            $options[$name] = $this->makeOption($name, $values);
         }
         $all = $this->definition->getOptions();
         $remaining = array_diff_key($all, $options);
@@ -344,6 +342,16 @@ class ParameterParser
     }
 
     /**
+     * @param string $name
+     * @param list<string> $values
+     * @return Argument
+     */
+    protected function makeArgument(string $name, array $values): Argument
+    {
+        return new Argument($this->definition->getArgument($name), true, $values);
+    }
+
+    /**
      * @param ArgumentDefinition $defined
      * @return Argument
      */
@@ -363,6 +371,16 @@ class ParameterParser
     ): void
     {
         $this->optionValues[$defined->name][] = $value;
+    }
+
+    /**
+     * @param string $name
+     * @param list<string> $values
+     * @return Option
+     */
+    protected function makeOption(string $name, array $values): Option
+    {
+        return new Option($this->getDefinedOption($name), true, $values);
     }
 
     /**

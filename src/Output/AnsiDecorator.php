@@ -5,10 +5,10 @@ namespace SouthPointe\Cli\Output;
 use SouthPointe\Ansi\Buffer;
 use SouthPointe\Ansi\Codes\Color;
 
-readonly class AnsiDecorator implements Decorator
+class AnsiDecorator implements Decorator
 {
     public function __construct(
-        private Buffer $buffer,
+        private readonly Buffer $buffer = new Buffer(),
     )
     {
     }

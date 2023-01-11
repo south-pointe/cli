@@ -5,9 +5,16 @@ namespace SouthPointe\Cli\Definitions;
 class ArgumentBuilder extends ParameterBuilder
 {
     /**
-     * @var bool
+     * @param string $name
+     * @param bool $optional
      */
-    protected bool $optional = false;
+    public function __construct(
+        string $name,
+        protected bool $optional = false,
+    )
+    {
+        parent::__construct($name);
+    }
 
     /**
      * @return ArgumentDefinition
