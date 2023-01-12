@@ -59,13 +59,12 @@ abstract class Command
      */
     public function execute(Input $input, Output $output, array $parameters): int
     {
-        $this->input = $input;
-        $this->output = $output;
-
         $parsed = $this->parseDefinition($parameters);
 
         $this->arguments = $parsed['arguments'];
         $this->options = $parsed['options'];
+        $this->input = $input;
+        $this->output = $output;
 
         $code = $this->run() ?? 0;
 
