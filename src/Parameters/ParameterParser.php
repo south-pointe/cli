@@ -23,32 +23,34 @@ use function substr;
 class ParameterParser
 {
     /**
-     * @var int
+     * @param CommandDefinition $definition
+     * @param list<string> $parameters
+     * @return array{
+     *     arguments: array<string, Argument>,
+     *     options: array<string, Option>,
+     * }
      */
-    protected int $parameterCursor = 0;
-
-    /**
-     * @var int
-     */
-    protected int $argumentCursor = 0;
-
-    /**
-     * @var array<string, list<mixed>>
-     */
-    protected array $argumentValues = [];
-
-    /**
-     * @var array<string, list<mixed>>
-     */
-    protected array $optionValues = [];
+    public static function parse(CommandDefinition $definition, array $parameters): array
+    {
+        $self = new self($definition, $parameters);
+        return $self->execute();
+    }
 
     /**
      * @param CommandDefinition $definition
      * @param list<string> $parameters
+     * @param int $argumentCursor
+     * @param int $parameterCursor
+     * @param array<string, list<mixed>> $argumentValues
+     * @param array<string, list<mixed>> $optionValues
      */
-    public function __construct(
+    protected function __construct(
         protected CommandDefinition $definition,
         protected array $parameters,
+        protected int $argumentCursor = 0,
+        protected int $parameterCursor = 0,
+        protected array $argumentValues = [],
+        protected array $optionValues = [],
     )
     {
     }
@@ -59,11 +61,12 @@ class ParameterParser
      *     options: array<string, Option>,
      * }
      */
-    public function parse(): array
+    public function execute(): array
     {
         $parameterCount = count($this->parameters);
+        $parameters = $this->parameters;
         while ($this->parameterCursor < $parameterCount) {
-            $this->processParameter();
+            $this->processParameter($parameters);
         }
 
         return [

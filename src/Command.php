@@ -54,16 +54,16 @@ abstract class Command
      *
      * @param Input $input
      * @param Output $output
-     * @param list<string> $rawParameters
+     * @param list<string> $parameters
      * @return int
      */
-    public function execute(Input $input, Output $output, array $rawParameters): int
+    public function execute(Input $input, Output $output, array $parameters): int
     {
         $this->input = $input;
         $this->output = $output;
 
-        $parser = new ParameterParser($this->definition, $rawParameters);
-        $parsed = $parser->parse();
+        $parsed = $this->parseDefinition($parameters);
+
         $this->arguments = $parsed['arguments'];
         $this->options = $parsed['options'];
 
@@ -80,4 +80,16 @@ abstract class Command
      * @return int|null
      */
     abstract public function run(): ?int;
+
+    /**
+     * @param list<string> $parameters
+     * @return array{
+     *     arguments: array<string, Argument>,
+     *     options: array<string, Option>,
+     * }
+     */
+    protected function parseDefinition(array $parameters): array
+    {
+        return ParameterParser::parse($this->definition, $parameters);
+    }
 }

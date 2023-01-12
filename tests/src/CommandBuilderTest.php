@@ -35,8 +35,7 @@ class CommandBuilderTest extends TestCase
         array $rawParameters,
     ): array
     {
-        $parser = new ParameterParser($builder->build(), $rawParameters);
-        return $parser->parse();
+        return ParameterParser::parse($builder->build(), $rawParameters);
     }
 
     public function test_plain(): void
