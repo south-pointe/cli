@@ -5,14 +5,14 @@ namespace SouthPointe\Cli;
 use SouthPointe\Cli\Parameters\Argument;
 use SouthPointe\Cli\Parameters\Option;
 use SouthPointe\Cli\Parameters\ParameterParser;
-use Webmozart\Assert\Assert;
+use SouthPointe\Core\Exceptions\LogicException;
 
 abstract class Command
 {
     /**
      * @var CommandDefinition
      */
-    protected readonly CommandDefinition $definition;
+    public readonly CommandDefinition $definition;
 
     /**
      * @var array<string, Argument>
@@ -68,7 +68,11 @@ abstract class Command
 
         $code = $this->run() ?? 0;
 
-        Assert::range($code, 0, 255);
+        if ($code < 0 || $code > 255) {
+            throw new LogicException("Exit code must be between 0 and 255, {$code} given.", [
+                'code' => $code,
+            ]);
+        }
 
         return $code;
     }
@@ -77,6 +81,8 @@ abstract class Command
      * The method which runs the user defined logic.
      *
      * @return int|null
+     * Exit code for the given command.
+     * Must be between 0 and 255.
      */
     abstract public function run(): ?int;
 

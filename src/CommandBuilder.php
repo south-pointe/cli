@@ -25,6 +25,8 @@ class CommandBuilder
         protected array $shortNameAliases = [],
     )
     {
+        $this->addHelpOption();
+        $this->addVerboseOption();
     }
 
     /**
@@ -101,5 +103,28 @@ class CommandBuilder
             array_map(fn($builder) => $builder->build(), $this->optionBuilders),
             $this->shortNameAliases,
         );
+    }
+
+    /**
+     * @return $this
+     */
+    protected function addVerboseOption(): static
+    {
+        $this->option('verbose', 'v')
+            ->description('Set output to verbose mode. Verbosity can be adjusted by calling it multiple times (ex: -vv).')
+            ->allowMultiple()
+            ->noValue();
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    protected function addHelpOption(): static
+    {
+        $this->option('help', 'h')
+            ->description('Displays usage and the arguments and options you can use for the command.')
+            ->noValue();
+        return $this;
     }
 }
