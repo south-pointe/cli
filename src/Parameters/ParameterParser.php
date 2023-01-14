@@ -63,12 +63,8 @@ class ParameterParser
      */
     public function execute(): array
     {
-        $parameterCount = count($this->parameters);
-        $parameters = $this->parameters;
-        while ($this->parameterCursor < $parameterCount) {
-            $this->processParameter($parameters);
-        }
-
+        $this->processParameters();
+        
         return [
             'arguments' => $this->makeArguments(),
             'options' => $this->makeOptions(),
@@ -121,14 +117,18 @@ class ParameterParser
     /**
      * @return void
      */
-    protected function processParameter(): void
+    protected function processParameters(): void
     {
-        $parameter = $this->parameters[$this->parameterCursor];
-        match (true) {
-            $this->isLongOption($parameter) => $this->processAsLongOption($parameter),
-            $this->isShortOption($parameter) => $this->processAsShortOptions($parameter),
-            default => $this->processAsArgument($parameter),
-        };
+        $parameterCount = count($this->parameters);
+        $parameters = $this->parameters;
+        while ($this->parameterCursor < $parameterCount) {
+            $parameter = $parameters[$this->parameterCursor];
+            match (true) {
+                $this->isLongOption($parameter) => $this->processAsLongOption($parameter),
+                $this->isShortOption($parameter) => $this->processAsShortOptions($parameter),
+                default => $this->processAsArgument($parameter),
+            };
+        }
     }
 
     /**
