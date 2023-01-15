@@ -9,6 +9,7 @@ use SouthPointe\Cli\Definitions\ParameterDefinition;
 use SouthPointe\Cli\Exceptions\ParseException;
 use function array_is_list;
 use function array_key_exists;
+use function array_keys;
 use function count;
 use function explode;
 use function gettype;
@@ -278,8 +279,8 @@ class ParameterParser
         foreach ($this->definition->getOptions() as $name => $defined) {
             $values = $this->optionValues[$name] ?? null;
             $options[$name] = $values !== null
-                ? new Option($defined, true, $values)
-                : new Option($defined, false, $this->getDefaultValue($defined));
+                ? new Option($defined, true, $this->mergeDefaults($defined, $values))
+                : new Option($defined, false, $this->mergeDefaults($defined, []));
         }
         return $options;
     }
@@ -342,38 +343,48 @@ class ParameterParser
 
     /**
      * @param ParameterDefinition $defined
+     * @param list<string|null> $values
      * @return list<string>
      */
-    protected function getDefaultValue(ParameterDefinition $defined): array
+    protected function mergeDefaults(ParameterDefinition $defined, array $values): array
     {
         $default = $defined->default;
 
         if ($defined->allowMultiple) {
-            $default ??= [];
-
-            if (!is_array($default)) {
-                $this->throwParseException($defined, 'Default values must be list<string>, since it allows multiple values.');
-            }
-
-            if (!array_is_list($default)) {
-                $this->throwParseException($defined, 'Default values must be list<string>, map given.');
-            }
-
-            foreach ($default as $value) {
-                if (!is_string($value)) {
-                    $type = gettype($value);
-                    $this->throwParseException($defined, "Default values must consist of strings, {$type} given.");
+            if (is_string($default)) {
+                foreach (array_keys($values) as $index) {
+                    $values[$index] ??= $default;
                 }
             }
-            return $default;
+            if (is_array($default)) {
+                if (!array_is_list($default)) {
+                    $this->throwParseException($defined, 'Default values must be list<string>, map given.');
+                }
+
+                foreach ($default as $index => $value) {
+                    if (!is_string($value)) {
+                        $type = gettype($value);
+                        $this->throwParseException($defined, "Default values must consist of strings, {$type} given.");
+                    }
+                    $values[$index] ??= $value;
+                }
+            }
+        } else {
+            if (!is_string($default)) {
+                $type = gettype($default);
+                $this->throwParseException($defined, "Default values must consist of strings, {$type} given.");
+            }
+            foreach (array_keys($values) as $index) {
+                $values[$index] ??= $default;
+            }
         }
 
-        $default ??= '';
-        if (!is_string($default)) {
-            $type = gettype($default);
-            $this->throwParseException($defined, "Default value must be defined as string, {$type} given.");
+        // Convert null (no value given) to empty string.
+        $result = [];
+        foreach ($values as $index => $value) {
+            $result[$index] = $value ?? '';
         }
-        return [$default];
+        return $result;
     }
 
     /**
