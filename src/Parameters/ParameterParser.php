@@ -41,8 +41,8 @@ class ParameterParser
      * @param list<string> $parameters
      * @param int $argumentCursor
      * @param int $parameterCursor
-     * @param array<string, list<mixed>> $argumentValues
-     * @param array<string, list<mixed>> $optionValues
+     * @param array<string, list<string|null>> $argumentValues
+     * @param array<string, list<string|null>> $optionValues
      */
     protected function __construct(
         protected CommandDefinition $definition,
@@ -64,19 +64,11 @@ class ParameterParser
     public function execute(): array
     {
         $this->processParameters();
-        
+
         return [
             'arguments' => $this->makeArguments(),
             'options' => $this->makeOptions(),
         ];
-    }
-
-    /**
-     * @return bool
-     */
-    protected function hasMoreParameters(): bool
-    {
-        return $this->parameterCursor < count($this->parameters);
     }
 
     /**
@@ -109,9 +101,9 @@ class ParameterParser
      * @param string $parameter
      * @return bool
      */
-    protected function isNotAnOption(string $parameter): bool
+    protected function isOption(string $parameter): bool
     {
-        return !str_starts_with($parameter, '-');
+        return str_starts_with($parameter, '-');
     }
 
     /**
@@ -137,33 +129,44 @@ class ParameterParser
      */
     protected function processAsLongOption(string $parameter): void
     {
-        $parts = explode('=', ltrim($parameter, '-'));
-        $name = $parts[0];
+        $parts = explode('=', $parameter, 2);
+        $name = ltrim($parts[0], '-');
         $value = $parts[1] ?? null;
-
         $defined = $this->getDefinedOption($name);
 
-        if ($value === null && $this->hasMoreParameters()) {
-            // look at the next parameter to check if it's a value
-            $nextParameter = $this->nextParameterOrNull();
-            if ($nextParameter !== null && $this->isNotAnOption($nextParameter)) {
-                $value = $nextParameter;
+        if ($defined->valueRequired) {
+            // value given with =
+            if ($value !== null) {
+                $this->addOptionValue($defined, $value);
                 $this->parameterCursor++;
+                return;
             }
+
+            // value might have been given as space,
+            // look at the next parameter to check if that's the case.
+            $nextParameter = $this->nextParameterOrNull();
+            if ($nextParameter === null || $this->isOption($nextParameter)) {
+                throw new ParseException("[option --{$name}] Requires a value.", [
+                    'defined' => $defined,
+                    'parameters' => $this->parameters,
+                    'cursor' => $this->parameterCursor,
+                ]);
+            }
+            $this->addOptionValue($defined, $nextParameter);
+            $this->parameterCursor+= 2;
+            return;
         }
 
-        $value ??= $defined->default;
-
-        if ($value === null && $defined->valueRequired) {
-            throw new ParseException("Option: [--{$name}] requires a value.", [
+        // no value should be given but is given.
+        if ($value !== null) {
+            throw new ParseException("[option --{$name}] No value expected but {$value} given.", [
                 'defined' => $defined,
-                'parameter' => $parameter,
+                'parameters' => $this->parameters,
+                'cursor' => $this->parameterCursor,
             ]);
         }
 
-        $this->addOptionValue($defined, $value);
-
-        $this->parameterCursor++;
+        $this->addOptionValue($defined, null);
     }
 
     /**
@@ -178,40 +181,7 @@ class ParameterParser
             $char = $chars[$i];
             $defined = $this->getDefinedOptionByShortName($char);
 
-            $nextChar = $chars[$i + 1] ?? false;
-
-            // on the last char, no need to go further.
-            if ($nextChar === false) {
-                $nextParameter = $this->nextParameterOrNull();
-                if ($nextParameter !== null && $this->isNotAnOption($nextParameter)) {
-                    $this->addOptionValue($defined, $nextParameter);
-                    $this->parameterCursor += 2;
-                    break;
-                }
-
-                // No values defined. Use default value.
-                $default = $defined->default;
-
-                if ($default === null && $defined->valueRequired) {
-                    throw new ParseException("Option: [-{$char}] requires a value.", [
-                        'defined' => $defined,
-                        'parameter' => $parameter,
-                    ]);
-                }
-
-                $this->addOptionValue($defined, $default);
-                $this->parameterCursor++;
-                break;
-            }
-
-            // if next char is another option, add the current option and move on.
-            if ($this->definition->shortOptionExists($nextChar)) {
-                $this->addOptionValue($defined, $defined->default);
-                $this->parameterCursor++;
-                continue;
-            }
-
-            // if next char is not an option, assume it's an argument.
+            // if next char is not an option, assume it's a value.
             $remainingChars = substr($chars, $i + 1);
             if ($defined->valueRequired) {
                 $this->addOptionValue($defined, $remainingChars);
@@ -219,8 +189,28 @@ class ParameterParser
                 break;
             }
 
+            $nextChar = $chars[$i + 1] ?? false;
+
+            // on the last char, no need to go further.
+            if ($nextChar === false) {
+                $nextParameter = $this->nextParameterOrNull();
+                $this->addOptionValue($defined, $nextParameter);
+                $this->parameterCursor++;
+                if (!$this->isOption($nextParameter ?? '')) {
+                    $this->parameterCursor++;
+                }
+                break;
+            }
+
+            // if next char is another option, add the current option and move on.
+            if ($this->definition->shortOptionExists($nextChar)) {
+                $this->addOptionValue($defined, null);
+                $this->parameterCursor++;
+                continue;
+            }
+
             throw new ParseException("[option: -{$char} (--{$defined->name})] invalid value: \"{$remainingChars}\"", [
-                'option' => $defined,
+                'defined' => $defined,
                 'parameters' => $this->parameters,
                 'cursor' => $this->parameterCursor,
                 'char' => $char,
