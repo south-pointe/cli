@@ -7,37 +7,44 @@ use SouthPointe\Core\Exceptions\RuntimeException;
 use function array_key_exists;
 
 /**
- * @template TDefined as ParameterDefinition
+ * @template TDefinition as ParameterDefinition
  */
 abstract class Parameter
 {
     /**
-     * @param TDefined $defined
+     * @var bool
+     */
+    public readonly bool $wasEntered;
+
+    /**
+     * @param TDefinition $definition
      * @param list<string> $values
+     * @param list<string|null> $enteredValues
      */
     public function __construct(
-        public readonly ParameterDefinition $defined,
-        public readonly bool $wasEntered,
-        public readonly array $values = [],
+        public readonly ParameterDefinition $definition,
+        public readonly array $values,
+        protected readonly array $enteredValues,
     )
     {
+        $this->wasEntered = $this->enteredValues !== [];
     }
 
     /**
-     * @param int $index
+     * @param int $at
      * @return string
      */
-    public function getValue(int $index = 0): string
+    public function value(int $at = 0): string
     {
         $values = $this->values;
 
-        if (!array_key_exists($index, $values)) {
-            throw new RuntimeException("No values exists at [{$index}]", [
-                'at' => $index,
+        if (!array_key_exists($at, $values)) {
+            throw new RuntimeException("No values exists at [{$at}]", [
+                'at' => $at,
                 'values' => $values,
             ]);
         }
 
-        return $values[$index];
+        return $values[$at];
     }
 }

@@ -246,7 +246,7 @@ class CommandBuilderTest extends TestCase
         $this->parse($builder, ['--all']);
     }
 
-    public function test_option__long__no_value(): void
+    public function test_option__long__no_value__no_default(): void
     {
         $builder = $this->makeBuilder();
         $builder->option('all');
@@ -275,7 +275,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__long__no_value__value_required(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Option: [--all] requires a value');
+        $this->expectExceptionMessage('Option: [--all] requires a value.');
         $builder = $this->makeBuilder();
         $builder->option('all')->requiresValue();
         $this->parse($builder, ['--all']);
@@ -284,7 +284,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__long__spaced_value(): void
     {
         $builder = $this->makeBuilder();
-        $builder->option('all');
+        $builder->option('all')->requiresValue();
         $parsed = $this->parse($builder, ['--all', 'text']);
 
         self::assertCount(3, $parsed['options']);
@@ -297,7 +297,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__long__equal_value(): void
     {
         $builder = $this->makeBuilder();
-        $builder->option('all');
+        $builder->option('all')->requiresValue();
         $parsed = $this->parse($builder, ['--all=text']);
 
         self::assertCount(3, $parsed['options']);
@@ -310,7 +310,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__long__multiple(): void
     {
         $builder = $this->makeBuilder();
-        $builder->option('all')->allowMultiple();
+        $builder->option('all')->allowMultiple()->requiresValue();
         $parsed = $this->parse($builder, ['--all=1', '--all=2']);
 
         self::assertCount(3, $parsed['options']);
@@ -325,7 +325,7 @@ class CommandBuilderTest extends TestCase
         $this->expectException(ParseException::class);
         $this->expectExceptionMessage('Option: [--all] cannot be entered more than once.');
         $builder = $this->makeBuilder();
-        $builder->option('all');
+        $builder->option('all')->requiresValue();
         $this->parse($builder, ['--all=1', '--all=2']);
     }
 
@@ -371,7 +371,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__long__multiple__with_other_options_in_between(): void
     {
         $builder = $this->makeBuilder();
-        $builder->option('all')->allowMultiple();
+        $builder->option('all')->allowMultiple()->requiresValue();
         $builder->option('bee');
         $parsed = $this->parse($builder, ['--all=1', '--bee', '--all=2']);
 
@@ -431,7 +431,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__short__equal_value(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('[option: -a (--all)] invalid value: "=text"');
+        $this->expectExceptionMessage('[Option: -a (--all)] invalid value: "=text"');
         $builder = $this->makeBuilder();
         $builder->option('all', 'a');
         $this->parse($builder, ['-a=text']);

@@ -102,9 +102,9 @@ class ParameterParser
      * @param string $parameter
      * @return bool
      */
-    protected function isOption(string $parameter): bool
+    protected function isNotOption(string $parameter): bool
     {
-        return str_starts_with($parameter, '-');
+        return !str_starts_with($parameter, '-');
     }
 
     /**
@@ -146,21 +146,28 @@ class ParameterParser
             // value might have been given as space,
             // look at the next parameter to check if that's the case.
             $nextParameter = $this->nextParameterOrNull();
-            if ($nextParameter === null || $this->isOption($nextParameter)) {
-                throw new ParseException("[option --{$name}] Requires a value.", [
-                    'defined' => $defined,
-                    'parameters' => $this->parameters,
-                    'cursor' => $this->parameterCursor,
-                ]);
+            if ($nextParameter !== null && $this->isNotOption($nextParameter)) {
+                $this->addOptionValue($defined, $nextParameter);
+                $this->parameterCursor+= 2;
+                return;
             }
-            $this->addOptionValue($defined, $nextParameter);
-            $this->parameterCursor+= 2;
-            return;
+
+            if ($defined->default !== null) {
+                $this->addOptionValue($defined, null);
+                $this->parameterCursor++;
+                return;
+            }
+
+            throw new ParseException("Option: [--{$name}] requires a value.", [
+                'defined' => $defined,
+                'parameters' => $this->parameters,
+                'cursor' => $this->parameterCursor,
+            ]);
         }
 
         // no value should be given but is given.
         if ($value !== null) {
-            throw new ParseException("[option --{$name}] No value expected but {$value} given.", [
+            throw new ParseException("Option: [--{$name}] no value expected but \"{$value}\" given.", [
                 'defined' => $defined,
                 'parameters' => $this->parameters,
                 'cursor' => $this->parameterCursor,
@@ -168,6 +175,7 @@ class ParameterParser
         }
 
         $this->addOptionValue($defined, null);
+        $this->parameterCursor++;
     }
 
     /**
@@ -197,7 +205,7 @@ class ParameterParser
                 $nextParameter = $this->nextParameterOrNull();
                 $this->addOptionValue($defined, $nextParameter);
                 $this->parameterCursor++;
-                if (!$this->isOption($nextParameter ?? '')) {
+                if (!$this->isNotOption($nextParameter ?? '')) {
                     $this->parameterCursor++;
                 }
                 break;
@@ -210,7 +218,7 @@ class ParameterParser
                 continue;
             }
 
-            throw new ParseException("[option: -{$char} (--{$defined->name})] invalid value: \"{$remainingChars}\"", [
+            throw new ParseException("[Option: -{$char} (--{$defined->name})] invalid value: \"{$remainingChars}\"", [
                 'defined' => $defined,
                 'parameters' => $this->parameters,
                 'cursor' => $this->parameterCursor,
@@ -250,21 +258,17 @@ class ParameterParser
     {
         $arguments = [];
         foreach ($this->definition->getArguments() as $name => $defined) {
-            $values = $this->argumentValues[$name] ?? null;
+            $entered = $this->argumentValues[$name] ?? [];
 
-            if ($values !== null) {
-                $arguments[$name] = new Argument($defined, true, $values);
-                continue;
-            }
-
-            if (!$defined->optional) {
+            if ($entered === [] && !$defined->optional) {
                 throw new ParseException("Missing required argument: {$name}.", [
                     'parameters' => $this->parameters,
                     'defined' => $defined,
                 ]);
             }
 
-            $arguments[$name] = new Argument($defined, false, $this->getDefaultValue($defined));
+            $merged = $this->mergeDefaults($defined, $entered);
+            $arguments[$name] = new Argument($defined, $merged, $entered);
         }
 
         return $arguments;
@@ -277,10 +281,9 @@ class ParameterParser
     {
         $options = [];
         foreach ($this->definition->getOptions() as $name => $defined) {
-            $values = $this->optionValues[$name] ?? null;
-            $options[$name] = $values !== null
-                ? new Option($defined, true, $this->mergeDefaults($defined, $values))
-                : new Option($defined, false, $this->mergeDefaults($defined, []));
+            $entered = $this->optionValues[$name] ?? [];
+            $merged = $this->mergeDefaults($defined, $entered);
+            $options[$name] = new Option($defined, $merged, $entered);
         }
         return $options;
     }
@@ -338,7 +341,7 @@ class ParameterParser
             ]);
         }
 
-        $this->optionValues[$name][] = $value ?? '';
+        $this->optionValues[$name][] = $value;
     }
 
     /**
@@ -348,7 +351,7 @@ class ParameterParser
      */
     protected function mergeDefaults(ParameterDefinition $defined, array $values): array
     {
-        $default = $defined->default;
+        $default = $defined->default ?? '';
 
         if ($defined->allowMultiple) {
             if (is_string($default)) {
@@ -356,6 +359,7 @@ class ParameterParser
                     $values[$index] ??= $default;
                 }
             }
+
             if (is_array($default)) {
                 if (!array_is_list($default)) {
                     $this->throwParseException($defined, 'Default values must be list<string>, map given.');

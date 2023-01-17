@@ -16,7 +16,7 @@ class OptionDefinition extends ParameterDefinition
         string $name,
         public ?string $short = null,
         string $description = '',
-        public bool $valueRequired = true,
+        public bool $valueRequired = false,
         bool $allowMultiple = false,
         string|array|null $default = null,
     )
