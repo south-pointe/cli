@@ -187,12 +187,15 @@ class ParameterParser
             $defined = $this->getDefinedOptionByShortName($char);
 
             if ($defined->valueRequired) {
-                // next char is not an option
+                // Next char is not an option
                 $nextChar = $chars[$i + 1] ?? '';
 
-                // has more chars
+                // Has more chars
                 if ($nextChar !== '') {
-                    if (!$this->definition->shortOptionExists($nextChar)) {
+                    if ($this->definition->shortOptionExists($nextChar)) {
+                        // Preceding char is an option so move on.
+                    }
+                    else {
                         // Preceding chars will be considered a value.
                         $remainingChars = substr($chars, $i + 1);
                         $this->addOptionValue($defined, $remainingChars);
@@ -200,9 +203,9 @@ class ParameterParser
                         return;
                     }
                 }
-                // no more chars left
+                // No more chars left
                 else {
-                    // look at the next parameter to check if value is given as string.
+                    // Look at the next parameter to check if value is given as string.
                     $nextParameter = $this->nextParameterOrNull();
                     if ($nextParameter !== null && $this->isNotOption($nextParameter)) {
                         $this->addOptionValue($defined, $nextParameter);
