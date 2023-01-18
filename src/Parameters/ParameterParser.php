@@ -268,11 +268,11 @@ class ParameterParser
                 ]);
             }
 
-            $merged = empty($enteredValues)
+            $mergedValues = empty($enteredValues)
                 ? $this->mergeDefaults($defined, [null])
                 : $this->mergeDefaults($defined, $enteredValues);
 
-            $arguments[$name] = new Argument($defined, $merged, $enteredValues);
+            $arguments[$name] = new Argument($defined, $mergedValues, $enteredValues);
         }
 
         return $arguments;
