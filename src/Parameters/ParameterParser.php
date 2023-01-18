@@ -256,17 +256,20 @@ class ParameterParser
     {
         $arguments = [];
         foreach ($this->definition->getArguments() as $name => $defined) {
-            $entered = $this->argumentValues[$name] ?? [];
+            $enteredValues = $this->argumentValues[$name] ?? [];
 
-            if ($entered === [] && !$defined->optional) {
+            if (empty($enteredValues) && !$defined->optional) {
                 throw new ParseException("Missing required argument: {$name}.", [
                     'parameters' => $this->parameters,
                     'defined' => $defined,
                 ]);
             }
 
-            $merged = $this->mergeDefaults($defined, $entered);
-            $arguments[$name] = new Argument($defined, $merged, $entered);
+            $merged = empty($enteredValues)
+                ? $this->mergeDefaults($defined, [null])
+                : $this->mergeDefaults($defined, $enteredValues);
+
+            $arguments[$name] = new Argument($defined, $merged, $enteredValues);
         }
 
         return $arguments;
@@ -279,9 +282,9 @@ class ParameterParser
     {
         $options = [];
         foreach ($this->definition->getOptions() as $name => $defined) {
-            $entered = $this->optionValues[$name] ?? [];
-            $merged = $this->mergeDefaults($defined, $entered);
-            $options[$name] = new Option($defined, $merged, $entered);
+            $enteredValues = $this->optionValues[$name] ?? [];
+            $mergedValues = $this->mergeDefaults($defined, $enteredValues);
+            $options[$name] = new Option($defined, $mergedValues, $enteredValues);
         }
         return $options;
     }
