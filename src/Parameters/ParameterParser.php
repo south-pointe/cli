@@ -152,22 +152,18 @@ class ParameterParser
                 return;
             }
 
-            if ($defined->default !== null) {
-                $this->addOptionValue($defined, null);
-                $this->parameterCursor++;
-                return;
+            if ($defined->default === null) {
+                throw new ParseException("Option: --{$name} requires a value.", [
+                    'defined' => $defined,
+                    'parameters' => $this->parameters,
+                    'cursor' => $this->parameterCursor,
+                ]);
             }
-
-            throw new ParseException("Option: [--{$name}] requires a value.", [
-                'defined' => $defined,
-                'parameters' => $this->parameters,
-                'cursor' => $this->parameterCursor,
-            ]);
         }
 
         // no value should be given but is given.
         if ($value !== null) {
-            throw new ParseException("Option: [--{$name}] no value expected but \"{$value}\" given.", [
+            throw new ParseException("Option: --{$name} no value expected but \"{$value}\" given.", [
                 'defined' => $defined,
                 'parameters' => $this->parameters,
                 'cursor' => $this->parameterCursor,
@@ -190,40 +186,42 @@ class ParameterParser
             $char = $chars[$i];
             $defined = $this->getDefinedOptionByShortName($char);
 
-            // if next char is not an option, assume it's a value.
-            $remainingChars = substr($chars, $i + 1);
             if ($defined->valueRequired) {
-                $this->addOptionValue($defined, $remainingChars);
-                $this->parameterCursor++;
-                break;
-            }
+                // next char is not an option
+                $nextChar = $chars[$i + 1] ?? '';
 
-            $nextChar = $chars[$i + 1] ?? false;
-
-            // on the last char, no need to go further.
-            if ($nextChar === false) {
-                $nextParameter = $this->nextParameterOrNull();
-                $this->addOptionValue($defined, $nextParameter);
-                $this->parameterCursor++;
-                if (!$this->isNotOption($nextParameter ?? '')) {
-                    $this->parameterCursor++;
+                // has more chars
+                if ($nextChar !== '') {
+                    if (!$this->definition->shortOptionExists($nextChar)) {
+                        // Preceding chars will be considered a value.
+                        $remainingChars = substr($chars, $i + 1);
+                        $this->addOptionValue($defined, $remainingChars);
+                        $this->parameterCursor++;
+                        return;
+                    }
                 }
-                break;
+                // no more chars left
+                else {
+                    // look at the next parameter to check if value is given as string.
+                    $nextParameter = $this->nextParameterOrNull();
+                    if ($nextParameter !== null && $this->isNotOption($nextParameter)) {
+                        $this->addOptionValue($defined, $nextParameter);
+                        $this->parameterCursor+= 2;
+                        return;
+                    }
+                }
+
+                if ($defined->default === null) {
+                    throw new ParseException("Option: -{$char} (--{$defined->name}) requires a value.", [
+                        'defined' => $defined,
+                        'parameters' => $this->parameters,
+                        'cursor' => $this->parameterCursor,
+                    ]);
+                }
             }
 
-            // if next char is another option, add the current option and move on.
-            if ($this->definition->shortOptionExists($nextChar)) {
-                $this->addOptionValue($defined, null);
-                $this->parameterCursor++;
-                continue;
-            }
-
-            throw new ParseException("[Option: -{$char} (--{$defined->name})] invalid value: \"{$remainingChars}\"", [
-                'defined' => $defined,
-                'parameters' => $this->parameters,
-                'cursor' => $this->parameterCursor,
-                'char' => $char,
-            ]);
+            $this->addOptionValue($defined, null);
+            $this->parameterCursor++;
         }
     }
 
@@ -297,7 +295,7 @@ class ParameterParser
         $defined = $this->definition->getOptionOrNull($name);
 
         if ($defined === null) {
-            throw new ParseException("Option: [--{$name}] is not defined.", [
+            throw new ParseException("Option: --{$name} is not defined.", [
                 'parameters' => $this->parameters,
                 'name' => $name,
             ]);
@@ -315,7 +313,7 @@ class ParameterParser
         $defined = $this->definition->getOptionByShortOrNull($char);
 
         if ($defined === null) {
-            throw new ParseException("Option: [-{$char}] is not defined.", [
+            throw new ParseException("Option: -{$char} is not defined.", [
                 'parameters' => $this->parameters,
                 'cursor' => $this->parameterCursor,
                 'char' => $char,
@@ -335,7 +333,7 @@ class ParameterParser
         $name = $defined->name;
 
         if (array_key_exists($name, $this->optionValues) && !$defined->allowMultiple) {
-            throw new ParseException("Option: [--{$name}] cannot be entered more than once.", [
+            throw new ParseException("Option: --{$name} cannot be entered more than once.", [
                 'defined' => $defined,
                 'parameters' => $this->parameters,
             ]);
@@ -400,7 +398,7 @@ class ParameterParser
     protected function throwParseException(ParameterDefinition $defined, string $message, array $context = []): never
     {
         $type = ($defined instanceof ArgumentDefinition)
-            ? "Option: [--{$defined->name}]"
+            ? "Option: --{$defined->name}"
             : "Argument: [{$defined->name}]";
 
         throw new ParseException("{$type} {$message}", $context + [

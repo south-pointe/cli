@@ -70,7 +70,7 @@ class CommandBuilder
         $builder = new OptionBuilder($name, $short);
 
         if (array_key_exists($name, $this->optionBuilders)) {
-            throw new LogicException("Option [--{$name}] already exists.", [
+            throw new LogicException("Option: --{$name} already exists.", [
                 'name' => $name,
                 'option' => $this->optionBuilders[$name],
             ]);
@@ -79,7 +79,7 @@ class CommandBuilder
 
         if ($short !== null) {
             if (array_key_exists($short, $this->shortNameAliases)) {
-                throw new LogicException("Option [-{$short}] already exists.", [
+                throw new LogicException("Option: -{$short} already exists.", [
                     'name' => $name,
                     'option' => $this->optionBuilders[$name],
                 ]);

@@ -231,17 +231,17 @@ class CommandBuilderTest extends TestCase
     public function test_option__long__name_collision(): void
     {
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Option [--a] already exists.');
+        $this->expectExceptionMessage('Option: --all already exists.');
         $builder = $this->makeBuilder();
         $builder->name('t');
-        $builder->option('a');
-        $builder->option('a');
+        $builder->option('all');
+        $builder->option('all');
     }
 
     public function test_option__long__undefined(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Option: [--all] is not defined.');
+        $this->expectExceptionMessage('Option: --all is not defined.');
         $builder = $this->makeBuilder();
         $this->parse($builder, ['--all']);
     }
@@ -275,7 +275,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__long__no_value__value_required(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Option: [--all] requires a value.');
+        $this->expectExceptionMessage('Option: --all requires a value.');
         $builder = $this->makeBuilder();
         $builder->option('all')->requiresValue();
         $this->parse($builder, ['--all']);
@@ -323,7 +323,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__long__multiple_not_allowed(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Option: [--all] cannot be entered more than once.');
+        $this->expectExceptionMessage('Option: --all cannot be entered more than once.');
         $builder = $this->makeBuilder();
         $builder->option('all')->requiresValue();
         $this->parse($builder, ['--all=1', '--all=2']);
@@ -387,7 +387,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__short__name_collision(): void
     {
         $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('Option [-a] already exists.');
+        $this->expectExceptionMessage('Option: -a already exists.');
         $builder = $this->makeBuilder();
         $builder->name('t');
         $builder->option('one', 'a');
@@ -397,7 +397,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__short__undefined(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Option: [-a] is not defined.');
+        $this->expectExceptionMessage('Option: -a is not defined.');
         $builder = $this->makeBuilder();
         $this->parse($builder, ['-a']);
     }
@@ -418,7 +418,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__short__spaced_value(): void
     {
         $builder = $this->makeBuilder();
-        $builder->option('all', 'a');
+        $builder->option('all', 'a')->requiresValue();
         $parsed = $this->parse($builder, ['-a', 'text']);
 
         self::assertCount(3, $parsed['options']);
@@ -431,7 +431,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__short__equal_value(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('[Option: -a (--all)] invalid value: "=text"');
+        $this->expectExceptionMessage('Option: -= is not defined.');
         $builder = $this->makeBuilder();
         $builder->option('all', 'a');
         $this->parse($builder, ['-a=text']);
@@ -453,7 +453,7 @@ class CommandBuilderTest extends TestCase
     public function test_option__short__no_value__value_required(): void
     {
         $this->expectException(ParseException::class);
-        $this->expectExceptionMessage('Option: [-a] requires a value');
+        $this->expectExceptionMessage('Option: -a (--all) requires a value');
         $builder = $this->makeBuilder();
         $builder->option('all', 'a')->requiresValue();
         $this->parse($builder, ['-a']);
